@@ -20,7 +20,6 @@
             color: #fff;
             position: relative;
         }
-        /* Fundo com imagem e desfoque realista */
         .bg-blur {
             position: absolute;
             top: -15px;
@@ -79,27 +78,24 @@
             letter-spacing: 0.5px;
         }
         .btn-action {
+            display: block;
             background: linear-gradient(135deg, #6366f1, #4f46e5);
             color: white;
-            border: none;
+            text-decoration: none;
             padding: 14px 24px;
             font-size: 15px;
             font-weight: 600;
             border-radius: 10px;
-            cursor: pointer;
             transition: all 0.3s ease;
             width: 100%;
+            box-sizing: border-box;
             box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            text-align: center;
         }
         .btn-action:hover {
             background: linear-gradient(135deg, #4f46e5, #4338ca);
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
-        }
-        #contador {
-            margin-top: 20px;
-            font-size: 13px;
-            color: #64748b;
         }
     </style>
 </head>
@@ -112,17 +108,8 @@
         <div class="status-badge">● Design Atualizado</div>
         <h1>Interface Imersiva</h1>
         <p>Este layout substitui a versão anterior utilizando um conceito moderno de vidro fosco (Glassmorphic) sobre uma imagem de fundo totalmente desfocada.</p>
-        <button class="btn-action" onclick="executarAcao()">Testar Interação</button>
-        <div id="contador">Ações registradas: 0</div>
+        <a href="https://www.escolainstructiva.com.br" target="_blank" class="btn-action">Acessar Escola Instructiva</a>
     </div>
-
-    <script>
-        let contadorCliques = 0;
-        function executarAcao() {
-            contadorCliques++;
-            document.getElementById('contador').innerText = `Ações registradas: ${contadorCliques}`;
-        }
-    </script>
 
 </body>
 </html>
