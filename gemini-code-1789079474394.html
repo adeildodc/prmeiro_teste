@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Primeiro Site no Ar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            max-width: 400px;
+            width: 90%;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 14px;
+            color: #e0e0e0;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+        }
+        button:hover {
+            background-color: #219653;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #mensagem {
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>🚀 Olá, Mundo!</h1>
+        <p>Este é o seu primeiro site publicado com sucesso através do GitHub e Vercel.</p>
+        <button onclick="interagir()">Clique em mim</button>
+        <div id="mensagem"></div>
+    </div>
+
+    <script>
+        function interagir() {
+            const mensagens = [
+                "Parabéns! O site está rodando perfeitamente. 🎉",
+                "Você deu o primeiro passo rumo à web! 💻",
+                "Tudo funcionando com HTML, CSS e JavaScript. ✨"
+            ];
+            const aleatoria = mensagens[Math.floor(Math.random() * mensagens.length)];
+            document.getElementById("mensagem").innerText = aleatoria;
+        }
+    </script>
+
+</body>
+</html>
