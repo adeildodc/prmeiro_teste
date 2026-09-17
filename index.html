@@ -6,35 +6,48 @@
     <title>CRM Cobrança & Negociação</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Bibliotecas do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
 
-    <!-- Tela de Identificação -->
+    <!-- Tela de Login -->
     <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gray-800">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-96 text-center">
-            <h2 class="text-2xl font-bold mb-4">Bem-vindo ao CRM</h2>
-            <p class="mb-4 text-sm text-gray-600">Identifique-se para começar</p>
-            <input type="text" id="operatorName" class="w-full border p-2 rounded mb-4" placeholder="Ex: Adeildo">
-            <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Entrar</button>
+        <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Login no CRM</h2>
+            <div id="loginError" class="hidden bg-red-100 text-red-700 p-2 rounded mb-4 text-sm font-bold"></div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700">E-mail</label>
+                    <input type="email" id="authEmail" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700">Senha</label>
+                    <input type="password" id="authPassword" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white font-bold p-2 rounded hover:bg-blue-700 transition">Entrar</button>
+            </div>
         </div>
     </div>
 
     <!-- Aplicativo Principal -->
     <div id="appScreen" class="hidden">
-        <!-- Header -->
         <header class="bg-blue-800 text-white p-4 shadow-md flex justify-between items-center">
             <h1 class="text-xl font-bold"><i class="fas fa-handshake"></i> CRM Cobrança Ativa</h1>
-            <div>
-                <span class="mr-4">Operador: <strong id="currentOperatorDisplay"></strong></span>
-                <button onclick="logout()" class="text-sm underline">Sair</button>
+            <div class="flex items-center space-x-4">
+                <span class="text-sm">Operador: <strong id="operatorNameDisplay"></strong></span>
+                <button onclick="handleLogout()" class="text-sm underline hover:text-gray-300">Sair</button>
             </div>
         </header>
 
         <!-- Navegação, Busca e Ações -->
         <div class="container mx-auto p-4 flex flex-col md:flex-row justify-between items-center mt-4 gap-4">
             <div class="flex space-x-4 w-full md:w-auto">
-                <button onclick="switchTab('active')" id="btnTabActive" class="px-4 py-2 bg-blue-600 text-white rounded font-bold w-full md:w-auto">Painel Principal</button>
-                <button onclick="switchTab('history')" id="btnTabHistory" class="px-4 py-2 bg-gray-300 text-gray-700 rounded font-bold hover:bg-gray-400 w-full md:w-auto">Histórico (Concluídas)</button>
+                <button onclick="switchTab('active')" id="btnTabActive" class="px-4 py-2 bg-blue-600 text-white rounded font-bold w-full md:w-auto">Painel Principal (Ativos)</button>
+                <button onclick="switchTab('history')" id="btnTabHistory" class="px-4 py-2 bg-gray-300 text-gray-700 rounded font-bold hover:bg-gray-400 w-full md:w-auto">Histórico (Inativos)</button>
             </div>
             
             <div class="flex w-full md:w-auto space-x-2">
@@ -42,42 +55,56 @@
                     <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                     <input type="text" id="searchInput" onkeyup="renderPanels()" placeholder="Buscar cliente..." class="w-full border pl-10 p-2 rounded shadow-sm focus:outline-none focus:border-blue-500">
                 </div>
-                <button onclick="openModal('newNegotiationModal')" class="bg-green-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-green-700 whitespace-nowrap">
-                    <i class="fas fa-plus"></i> Nova
+                <button onclick="openNewModal()" class="bg-green-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-green-700 whitespace-nowrap">
+                    <i class="fas fa-plus"></i> Novo Cliente
                 </button>
             </div>
         </div>
 
-        <!-- Painel Principal (Ativas) -->
-        <div id="activePanel" class="container mx-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Cards gerados via JS -->
-        </div>
-
-        <!-- Painel de Histórico (Concluídas) -->
+        <!-- Painéis -->
+        <div id="activePanel" class="container mx-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         <div id="historyPanel" class="hidden container mx-auto p-4">
             <div class="bg-white rounded shadow p-4">
-                <h2 class="text-xl font-bold mb-4">Negociações Concluídas</h2>
-                <div id="historyList" class="space-y-2">
-                    <!-- Lista gerada via JS -->
-                </div>
+                <h2 class="text-xl font-bold mb-4">Negociações Concluídas e Não Atendidas</h2>
+                <div id="historyList" class="space-y-2"></div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: Nova Negociação -->
+    <!-- MODAL: Nova Negociação com Verificação de Duplicidade -->
     <div id="newNegotiationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl">
-            <h2 class="text-xl font-bold mb-4">Iniciar Negociação</h2>
+        <div class="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
+            <h2 class="text-xl font-bold mb-4">Iniciar Novo Cadastro</h2>
             
-            <div id="previousHistoryAlert" class="hidden bg-yellow-100 text-yellow-800 p-2 rounded mb-4 text-sm font-bold flex justify-between items-center">
-                <span>Este cliente possui negociações anteriores.</span>
+            <div id="stepSearchDuplicate" class="mb-4 p-4 border rounded bg-gray-50">
+                <label class="block text-sm font-bold mb-2">Verifique se o cliente já existe (Nome ou CPF):</label>
+                <div class="flex gap-2">
+                    <input type="text" id="duplicateSearchInput" class="w-full border p-2 rounded" placeholder="Digite aqui...">
+                    <button onclick="checkDuplicate()" class="bg-gray-800 text-white px-4 rounded font-bold hover:bg-gray-900">Buscar</button>
+                </div>
+                <div id="duplicateResultArea" class="mt-3"></div>
             </div>
 
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-sm font-bold">Nome do Cliente</label>
-                    <input type="text" id="newClientName" onkeyup="checkPreviousHistory()" class="w-full border p-2 rounded">
+            <div id="stepFillData" class="space-y-3 hidden">
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-bold">Nome do Cliente</label>
+                        <input type="text" id="newClientName" class="w-full border p-2 rounded">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold">CPF</label>
+                        <input type="text" id="newCpf" class="w-full border p-2 rounded" placeholder="000.000.000-00">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold">Telefone</label>
+                        <input type="text" id="newTel" class="w-full border p-2 rounded" placeholder="(00) 00000-0000">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-bold">E-mail</label>
+                        <input type="email" id="newEmail" class="w-full border p-2 rounded" placeholder="cliente@email.com">
+                    </div>
                 </div>
+                <hr class="my-2">
                 <div>
                     <label class="block text-sm font-bold">Status Inicial</label>
                     <select id="newStatus" onchange="toggleReturnDate('newStatus', 'newReturnDateDiv')" class="w-full border p-2 rounded">
@@ -101,27 +128,34 @@
                     <label class="block text-sm font-bold">Observação Inicial</label>
                     <textarea id="newObservation" class="w-full border p-2 rounded" rows="2"></textarea>
                 </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeModal('newNegotiationModal')" class="bg-gray-400 text-white px-4 py-2 rounded">Cancelar</button>
+                    <button onclick="createNegotiation()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar Cadastro</button>
+                </div>
             </div>
-            <div class="mt-6 flex justify-end space-x-3">
-                <button onclick="closeModal('newNegotiationModal')" class="bg-gray-400 text-white px-4 py-2 rounded">Cancelar</button>
-                <button onclick="createNegotiation()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>
+            <div id="btnCancelStep1" class="mt-4 flex justify-end">
+                <button onclick="closeModal('newNegotiationModal')" class="bg-gray-400 text-white px-4 py-2 rounded">Cancelar Cadastro</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL: Detalhes e Ações da Negociação -->
     <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 w-full max-w-4xl shadow-xl flex gap-4 h-[90vh]">
-            
-            <!-- Coluna Esquerda: Ações -->
+        <div class="bg-white rounded-lg p-6 w-full max-w-5xl shadow-xl flex gap-4 h-[90vh]">
             <div class="w-1/3 border-r pr-4 overflow-y-auto">
-                <h2 class="text-xl font-bold mb-2" id="detailClientName">Nome do Cliente</h2>
-                <div class="mb-4 text-sm text-gray-600">
+                <h2 class="text-xl font-bold mb-1" id="detailClientName">Nome do Cliente</h2>
+                <div class="text-xs text-gray-500 mb-2">
+                    CPF: <span id="detailCpf"></span> | Tel: <span id="detailTel"></span><br>
+                    Email: <span id="detailEmail"></span>
+                </div>
+                
+                <div class="mb-4 text-sm bg-gray-100 p-2 rounded">
                     Resp: <span id="detailResponsible" class="font-bold"></span><br>
-                    Status: <span id="detailStatusBadge" class="font-bold"></span>
+                    Status: <span id="detailStatusBadge" class="font-bold text-blue-700"></span><br>
+                    Falhas de contato: <span id="detailFailedAttempts" class="font-bold text-red-600"></span>
                 </div>
 
-                <!-- Formulários de Ação (Apenas para ativas) -->
                 <div id="actionForms" class="space-y-4">
                     <div class="bg-gray-50 p-3 rounded border">
                         <label class="block text-sm font-bold mb-1">Mudar Status</label>
@@ -138,6 +172,12 @@
                         <button onclick="updateStatus()" class="w-full bg-blue-600 text-white text-sm p-2 rounded hover:bg-blue-700">Atualizar Status</button>
                     </div>
 
+                    <div class="bg-gray-50 p-3 rounded border border-red-200">
+                        <button onclick="registerMissedCall()" class="w-full bg-red-100 text-red-700 font-bold text-sm p-2 rounded hover:bg-red-200 border border-red-300">
+                            <i class="fas fa-phone-slash"></i> Registrar Não Atendimento
+                        </button>
+                    </div>
+
                     <div class="bg-gray-50 p-3 rounded border">
                         <label class="block text-sm font-bold mb-1">Adicionar Observação</label>
                         <textarea id="actionObservation" class="w-full border p-2 rounded mb-2 text-sm" rows="2"></textarea>
@@ -146,71 +186,112 @@
 
                     <div class="bg-gray-50 p-3 rounded border">
                         <label class="block text-sm font-bold mb-1">Registrar Proposta</label>
-                        <textarea id="actionProposal" class="w-full border p-2 rounded mb-2 text-sm" rows="2" placeholder="Ex: Entrada R$ 500 + 5x..."></textarea>
+                        <textarea id="actionProposal" class="w-full border p-2 rounded mb-2 text-sm" rows="2"></textarea>
                         <button onclick="addInteraction('Proposta', 'actionProposal')" class="w-full bg-green-600 text-white text-sm p-2 rounded hover:bg-green-700">Salvar Proposta</button>
                     </div>
                 </div>
 
-                <!-- Área de Retomada (Apenas para concluídas) -->
                 <div id="resumeArea" class="hidden bg-yellow-50 p-4 rounded border border-yellow-200 mb-4 mt-2">
-                    <p class="text-sm text-yellow-800 font-bold mb-2"><i class="fas fa-exclamation-circle"></i> Negociação Concluída</p>
-                    <p class="text-xs text-yellow-700 mb-3">O cliente descumpriu o acordo ou deseja renegociar?</p>
+                    <p class="text-sm text-yellow-800 font-bold mb-2"><i class="fas fa-exclamation-circle"></i> Negociação Inativa</p>
                     <button onclick="resumeNegotiation()" class="w-full bg-yellow-600 text-white text-sm p-2 rounded font-bold hover:bg-yellow-700 shadow">Retomar Negociação</button>
                 </div>
 
-                <!-- Botões Perigosos / Finais -->
                 <div class="mt-6 space-y-2">
-                    <button onclick="noResponse()" id="btnNoResponse" class="w-full bg-red-100 text-red-700 text-sm p-2 rounded border border-red-300 hover:bg-red-200">Cliente sem resposta (Excluir)</button>
-                    <button onclick="exportCSV()" class="w-full bg-gray-800 text-white text-sm p-2 rounded hover:bg-gray-900"><i class="fas fa-file-csv"></i> Exportar Histórico (CSV)</button>
+                    <button onclick="exportCSV()" class="w-full bg-gray-800 text-white text-sm p-2 rounded hover:bg-gray-900"><i class="fas fa-file-csv"></i> Exportar Histórico</button>
                     <button onclick="closeModal('detailsModal')" class="w-full bg-gray-300 text-gray-800 text-sm p-2 rounded hover:bg-gray-400">Fechar Janela</button>
                 </div>
             </div>
 
-            <!-- Coluna Direita: Linha do Tempo -->
             <div class="w-2/3 pl-4 flex flex-col h-full">
                 <h3 class="text-lg font-bold mb-2">Histórico (Linha do Tempo)</h3>
-                <div id="timelineContainer" class="flex-1 overflow-y-auto bg-gray-50 p-4 border rounded">
-                    <!-- Timeline via JS -->
-                </div>
+                <div id="timelineContainer" class="flex-1 overflow-y-auto bg-gray-50 p-4 border rounded"></div>
             </div>
         </div>
     </div>
 
-    <!-- Lógica do Sistema -->
+    <!-- Lógica e Conexão Firebase -->
     <script>
-        let currentUser = "";
+        const firebaseConfig = {
+            apiKey: "AIzaSyC69ynCbWuJmE4JmstjPdpMSdWlSOU1hPM",
+            authDomain: "inadimplentes-a249d.firebaseapp.com",
+            projectId: "inadimplentes-a249d",
+            storageBucket: "inadimplentes-a249d.firebasestorage.app",
+            messagingSenderId: "731693993038",
+            appId: "1:731693993038:web:a522194af7d5f2af2e471f"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+        
+        let dbRef = null;
+        let dbListener = null;
+        let currentUserEmail = null;
         let currentNegotiationId = null;
-        let db = JSON.parse(localStorage.getItem('crm_data')) || [];
+        let db = []; 
 
-        function saveData() {
-            localStorage.setItem('crm_data', JSON.stringify(db));
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUserEmail = user.email;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appScreen').style.display = 'block';
+                document.getElementById('operatorNameDisplay').innerText = user.email;
+                startDatabase();
+            } else {
+                currentUserEmail = null;
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('appScreen').style.display = 'none';
+                if (dbRef && dbListener) {
+                    dbRef.off('value', dbListener);
+                }
+            }
+        });
+
+        function handleLogin() {
+            const email = document.getElementById('authEmail').value;
+            const pass = document.getElementById('authPassword').value;
+            const errBox = document.getElementById('loginError');
+            
+            auth.signInWithEmailAndPassword(email, pass).catch((error) => {
+                errBox.style.display = 'block';
+                errBox.innerText = "Erro ao fazer login: " + error.message;
+            });
         }
 
-        function getTimestamp() {
-            const now = new Date();
-            return now.toLocaleString('pt-BR');
+        function handleLogout() {
+            auth.signOut();
         }
 
-        function generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        function startDatabase() {
+            dbRef = database.ref('crm_data');
+            dbListener = dbRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                db = data ? data : []; 
+                renderPanels();
+
+                if (currentNegotiationId) {
+                    const neg = db.find(n => n.id === currentNegotiationId);
+                    if (neg) {
+                        renderTimeline(neg);
+                        document.getElementById('detailStatusBadge').innerText = neg.status;
+                        document.getElementById('detailResponsible').innerText = neg.responsible;
+                        document.getElementById('detailFailedAttempts').innerText = neg.failedAttempts || 0;
+                    } else {
+                        closeModal('detailsModal');
+                    }
+                }
+            }, (error) => {
+                console.error("Erro de permissão no banco (Rules):", error);
+                alert("Sem permissão para ler o banco de dados. Verifique as rules do Firebase.");
+            });
         }
 
-        function login() {
-            const name = document.getElementById('operatorName').value.trim();
-            if(!name) { alert("Digite seu nome!"); return; }
-            currentUser = name;
-            document.getElementById('currentOperatorDisplay').innerText = currentUser;
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appScreen').style.display = 'block';
-            renderPanels();
+        function saveData() { 
+            if(dbRef) dbRef.set(db).catch(err => alert("Erro ao salvar: " + err.message)); 
         }
 
-        function logout() {
-            currentUser = "";
-            document.getElementById('operatorName').value = "";
-            document.getElementById('appScreen').style.display = 'none';
-            document.getElementById('loginScreen').style.display = 'flex';
-        }
+        function getTimestamp() { return new Date().toLocaleString('pt-BR'); }
+        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
 
         function switchTab(tab) {
             const activePanel = document.getElementById('activePanel');
@@ -242,24 +323,19 @@
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             panel.innerHTML = "";
             
-            const ativas = db.filter(n => n.status !== "Concluído" && n.clientName.toLowerCase().includes(searchTerm));
+            const ativas = db.filter(n => n.status !== "Concluído" && n.status !== "Não Atendido" && n.clientName.toLowerCase().includes(searchTerm));
 
             if(ativas.length === 0 && searchTerm !== "") {
-                panel.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">Nenhum cliente ativo encontrado com o termo "${searchTerm}".</p>`;
+                panel.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">Nenhum cliente ativo encontrado.</p>`;
                 return;
             }
 
             ativas.forEach(n => {
                 const canTakeover = n.allowTakeover === "Sim";
-                const isMine = n.responsible === currentUser;
+                const isMine = n.responsible === currentUserEmail;
                 
-                let takeoverHTML = "";
-                if (canTakeover) {
-                    takeoverHTML = `<div class="bg-green-100 text-green-800 text-xs font-bold p-2 mb-2 rounded border border-green-300">
-                        <i class="fas fa-unlock"></i> Qualquer atendente pode assumir este contato
-                    </div>`;
-                }
-
+                let takeoverHTML = canTakeover ? `<div class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 mb-2 rounded border border-green-300 inline-block"><i class="fas fa-unlock"></i> Livre para assumir</div>` : '';
+                
                 let btnAcaoHTML = "";
                 if(isMine) {
                     btnAcaoHTML = `<button onclick="openDetails('${n.id}')" class="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 shadow">Abrir Negociação</button>`;
@@ -274,15 +350,14 @@
                 panel.innerHTML += `
                     <div class="bg-white rounded-lg shadow border p-4 flex flex-col justify-between">
                         <div>
-                            <h3 class="font-bold text-lg border-b pb-2 mb-2">${n.clientName}</h3>
+                            <h3 class="font-bold text-lg leading-tight mb-1">${n.clientName}</h3>
                             ${takeoverHTML}
+                            <div class="text-xs text-gray-600 mb-2 border-b pb-2">CPF: ${n.cpf || '-'} | Tel: ${n.tel || '-'}</div>
                             <p class="text-sm mb-1"><strong>Status:</strong> ${n.status}</p>
-                            <p class="text-sm mb-1"><strong>Responsável:</strong> ${n.responsible}</p>
+                            <p class="text-sm mb-1"><strong>Resp:</strong> ${n.responsible}</p>
                             ${extraInfo}
                         </div>
-                        <div class="mt-4">
-                            ${btnAcaoHTML}
-                        </div>
+                        <div class="mt-4">${btnAcaoHTML}</div>
                     </div>
                 `;
             });
@@ -293,19 +368,22 @@
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             list.innerHTML = "";
             
-            const concluidas = db.filter(n => n.status === "Concluído" && n.clientName.toLowerCase().includes(searchTerm));
+            const inativas = db.filter(n => (n.status === "Concluído" || n.status === "Não Atendido") && n.clientName.toLowerCase().includes(searchTerm));
 
-            if(concluidas.length === 0 && searchTerm !== "") {
-                list.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum cliente concluído encontrado com o termo "${searchTerm}".</p>`;
+            if(inativas.length === 0 && searchTerm !== "") {
+                list.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum cliente inativo encontrado.</p>`;
                 return;
             }
 
-            concluidas.forEach(n => {
+            inativas.forEach(n => {
+                let badgeClass = n.status === "Não Atendido" ? "bg-red-100 text-red-800 border-red-300" : "bg-gray-200 text-gray-800 border-gray-400";
                 list.innerHTML += `
                     <div class="border p-4 rounded flex flex-col md:flex-row justify-between items-center bg-gray-50 hover:bg-gray-100 gap-4">
                         <div class="w-full md:w-auto">
                             <h4 class="font-bold text-lg">${n.clientName}</h4>
-                            <p class="text-xs text-gray-600 mt-1">Criada em: ${n.createdAt} | Responsável Final: ${n.responsible}</p>
+                            <div class="text-xs text-gray-600 mb-1">CPF: ${n.cpf || '-'} | Tel: ${n.tel || '-'}</div>
+                            <span class="text-[10px] px-2 py-1 border rounded font-bold ${badgeClass}">${n.status}</span>
+                            <span class="text-xs text-gray-500 ml-2">Resp: ${n.responsible}</span>
                         </div>
                         <div class="w-full md:w-auto">
                             <button onclick="openDetails('${n.id}')" class="w-full md:w-auto bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold shadow hover:bg-gray-900">Ver Histórico</button>
@@ -315,84 +393,111 @@
             });
         }
 
-        function checkPreviousHistory() {
-            const name = document.getElementById('newClientName').value.trim().toLowerCase();
-            const alertBox = document.getElementById('previousHistoryAlert');
-            const hasHistory = db.some(n => n.clientName.toLowerCase() === name && n.status === "Concluído");
-            
-            alertBox.style.display = (hasHistory && name !== "") ? "flex" : "none";
+        function openNewModal() {
+            if(!currentUserEmail) return;
+            document.getElementById('duplicateSearchInput').value = "";
+            document.getElementById('duplicateResultArea').innerHTML = "";
+            document.getElementById('stepFillData').style.display = 'none';
+            document.getElementById('btnCancelStep1').style.display = 'flex';
+            openModal('newNegotiationModal');
         }
 
-        function toggleReturnDate(selectId, divId) {
-            const val = document.getElementById(selectId).value;
-            const div = document.getElementById(divId);
-            div.style.display = val === 'Retornar em data combinada' ? 'block' : 'none';
+        function checkDuplicate() {
+            const term = document.getElementById('duplicateSearchInput').value.trim().toLowerCase();
+            const resultArea = document.getElementById('duplicateResultArea');
+            
+            if(term.length < 3) {
+                resultArea.innerHTML = `<p class="text-red-600 text-sm">Digite ao menos 3 caracteres para buscar.</p>`;
+                return;
+            }
+
+            const found = db.find(n => n.clientName.toLowerCase().includes(term) || (n.cpf && n.cpf.includes(term)));
+            
+            if(found) {
+                resultArea.innerHTML = `
+                    <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 p-3 rounded">
+                        <p class="font-bold mb-2"><i class="fas fa-exclamation-triangle"></i> Cliente já cadastrado!</p>
+                        <p class="text-sm mb-2">Nome: ${found.clientName} | Status: ${found.status}</p>
+                        <button onclick="openDetailsFromSearch('${found.id}')" class="bg-yellow-600 text-white px-4 py-1 rounded text-sm hover:bg-yellow-700">Abrir Cadastro Existente</button>
+                    </div>`;
+                document.getElementById('stepFillData').style.display = 'none';
+                document.getElementById('btnCancelStep1').style.display = 'flex';
+            } else {
+                resultArea.innerHTML = `<p class="text-green-600 text-sm font-bold"><i class="fas fa-check"></i> Cliente não encontrado. Prossiga com o cadastro abaixo.</p>`;
+                if(/\d/.test(term)) document.getElementById('newCpf').value = term;
+                else document.getElementById('newClientName').value = document.getElementById('duplicateSearchInput').value;
+                document.getElementById('stepFillData').style.display = 'block';
+                document.getElementById('btnCancelStep1').style.display = 'none';
+            }
+        }
+
+        function openDetailsFromSearch(id) {
+            closeModal('newNegotiationModal');
+            openDetails(id);
         }
 
         function createNegotiation() {
+            if(!currentUserEmail) return;
+
             const clientName = document.getElementById('newClientName').value.trim();
+            const cpf = document.getElementById('newCpf').value.trim();
+            const tel = document.getElementById('newTel').value.trim();
+            const email = document.getElementById('newEmail').value.trim();
             const status = document.getElementById('newStatus').value;
             const returnDate = document.getElementById('newReturnDate').value;
             const allowTakeover = document.getElementById('newAllowTakeover').value;
             const obs = document.getElementById('newObservation').value.trim();
 
-            if(!clientName) { alert("Nome do cliente é obrigatório!"); return; }
+            if(!clientName || !tel || !email) { alert("Nome, Telefone e Email são obrigatórios!"); return; }
             if(status === 'Retornar em data combinada' && !returnDate) { alert("Preencha a data de retorno!"); return; }
 
             const newNeg = {
                 id: generateId(),
-                clientName,
-                responsible: currentUser,
-                status,
-                returnDate: returnDate || null,
-                allowTakeover,
-                createdAt: getTimestamp(),
-                timeline: []
+                clientName, cpf, tel, email,
+                responsible: currentUserEmail,
+                status, returnDate: returnDate || null,
+                allowTakeover, failedAttempts: 0,
+                createdAt: getTimestamp(), timeline: []
             };
 
             newNeg.timeline.push({
-                date: getTimestamp(),
-                operator: currentUser,
-                action: "Criação da negociação",
-                detail: `Status inicial: ${status}`
+                date: getTimestamp(), operator: currentUserEmail,
+                action: "Criação do Cadastro", detail: `Criado com status: ${status}`
             });
 
             if(obs) {
                 newNeg.timeline.push({
-                    date: getTimestamp(),
-                    operator: currentUser,
-                    action: "Inclusão de observação",
-                    detail: obs
+                    date: getTimestamp(), operator: currentUserEmail,
+                    action: "Inclusão de observação", detail: obs
                 });
             }
 
             db.push(newNeg);
-            saveData();
+            saveData(); 
             closeModal('newNegotiationModal');
             
-            document.getElementById('newClientName').value = "";
-            document.getElementById('newReturnDate').value = "";
-            document.getElementById('newObservation').value = "";
-            document.getElementById('previousHistoryAlert').style.display = "none";
-
-            document.getElementById('searchInput').value = ""; // Limpa a busca ao criar
+            document.getElementById('newClientName').value = ""; document.getElementById('newCpf').value = "";
+            document.getElementById('newTel').value = ""; document.getElementById('newEmail').value = "";
+            document.getElementById('newReturnDate').value = ""; document.getElementById('newObservation').value = "";
+            
             switchTab('active');
         }
 
+        function toggleReturnDate(selectId, divId) {
+            const val = document.getElementById(selectId).value;
+            document.getElementById(divId).style.display = val === 'Retornar em data combinada' ? 'block' : 'none';
+        }
+
         function takeover(id) {
+            if(!currentUserEmail) return;
             if(confirm("Deseja assumir o contato deste cliente?")) {
                 const neg = db.find(n => n.id === id);
-                neg.responsible = currentUser;
-                
+                neg.responsible = currentUserEmail;
                 neg.timeline.push({
-                    date: getTimestamp(),
-                    operator: currentUser,
-                    action: "Alteração de responsável",
-                    detail: `Contato assumido por ${currentUser}`
+                    date: getTimestamp(), operator: currentUserEmail,
+                    action: "Alteração de responsável", detail: `Contato assumido por ${currentUserEmail}`
                 });
-
                 saveData();
-                renderPanels();
             }
         }
 
@@ -401,15 +506,18 @@
             const neg = db.find(n => n.id === id);
             
             document.getElementById('detailClientName').innerText = neg.clientName;
+            document.getElementById('detailCpf').innerText = neg.cpf || 'Não informado';
+            document.getElementById('detailTel').innerText = neg.tel || 'Não informado';
+            document.getElementById('detailEmail').innerText = neg.email || 'Não informado';
             document.getElementById('detailResponsible').innerText = neg.responsible;
             document.getElementById('detailStatusBadge').innerText = neg.status;
+            document.getElementById('detailFailedAttempts').innerText = neg.failedAttempts || 0;
             
-            const isConcluded = neg.status === "Concluído";
-            document.getElementById('actionForms').style.display = isConcluded ? 'none' : 'block';
-            document.getElementById('resumeArea').style.display = isConcluded ? 'block' : 'none';
-            document.getElementById('btnNoResponse').style.display = isConcluded ? 'none' : 'block';
+            const isInactive = (neg.status === "Concluído" || neg.status === "Não Atendido");
+            document.getElementById('actionForms').style.display = isInactive ? 'none' : 'block';
+            document.getElementById('resumeArea').style.display = isInactive ? 'block' : 'none';
 
-            if(!isConcluded) {
+            if(!isInactive) {
                 document.getElementById('actionStatus').value = neg.status;
                 toggleReturnDate('actionStatus', 'actionReturnDateDiv');
             }
@@ -421,6 +529,7 @@
         function renderTimeline(neg) {
             const container = document.getElementById('timelineContainer');
             container.innerHTML = "";
+            if(!neg.timeline) return;
 
             neg.timeline.slice().reverse().forEach(t => {
                 let icon = "fa-info-circle text-blue-500";
@@ -428,6 +537,7 @@
                 if(t.action.includes("Proposta")) icon = "fa-handshake text-green-500";
                 if(t.action.includes("Conclusão")) icon = "fa-check-circle text-gray-800";
                 if(t.action.includes("Retomada")) icon = "fa-redo text-yellow-600";
+                if(t.action.includes("Não Atendida")) icon = "fa-phone-slash text-red-500";
                 if(t.action.includes("responsável")) icon = "fa-user-exchange text-purple-500";
 
                 container.innerHTML += `
@@ -442,84 +552,82 @@
         }
 
         function updateStatus() {
+            if(!currentUserEmail) return;
             const status = document.getElementById('actionStatus').value;
             const date = document.getElementById('actionReturnDate').value;
             const neg = db.find(n => n.id === currentNegotiationId);
 
             if(status === 'Retornar em data combinada' && !date) { alert("Preencha a data!"); return; }
-
-            if(status === "Concluído") {
-                if(!confirm("Esta negociação será removida do painel principal e ficará disponível apenas no histórico. Deseja realmente concluir?")) {
-                    document.getElementById('actionStatus').value = neg.status;
-                    return;
-                }
+            if(status === "Concluído" && !confirm("Deseja concluir a negociação? Ela será enviada ao histórico.")) {
+                document.getElementById('actionStatus').value = neg.status;
+                return;
             }
 
             neg.status = status;
             if(status === 'Retornar em data combinada') neg.returnDate = date;
 
             neg.timeline.push({
-                date: getTimestamp(),
-                operator: currentUser,
+                date: getTimestamp(), operator: currentUserEmail,
                 action: status === "Concluído" ? "Conclusão da negociação" : "Alteração de status",
                 detail: status === 'Retornar em data combinada' ? `${status} para ${date}` : status
             });
+            saveData();
+            if(status === "Concluído") closeModal('detailsModal');
+        }
+
+        function registerMissedCall() {
+            if(!currentUserEmail) return;
+            
+            const neg = db.find(n => n.id === currentNegotiationId);
+            neg.failedAttempts = (neg.failedAttempts || 0) + 1;
+            neg.status = "Não Atendido";
+
+            neg.timeline.push({
+                date: getTimestamp(), operator: currentUserEmail,
+                action: "Tentativa Não Atendida",
+                detail: `Ligação não atendida. Total de tentativas perdidas: ${neg.failedAttempts}`
+            });
 
             saveData();
-            renderTimeline(neg);
-            document.getElementById('detailStatusBadge').innerText = neg.status;
-
-            if(status === "Concluído") {
-                closeModal('detailsModal');
-                renderPanels();
-            }
+            closeModal('detailsModal');
+            switchTab('active');
         }
 
         function resumeNegotiation() {
-            if(confirm("Deseja retomar esta negociação? Ela voltará para o painel principal em seu nome.")) {
+            if(!currentUserEmail) return;
+            if(confirm("Deseja retomar este contato? Ela voltará para o painel de ativos no seu nome.")) {
                 const neg = db.find(n => n.id === currentNegotiationId);
                 neg.status = "Em negociação";
-                neg.responsible = currentUser; // Atualiza o responsável para quem retomou
+                neg.responsible = currentUserEmail;
                 
                 neg.timeline.push({
-                    date: getTimestamp(),
-                    operator: currentUser,
+                    date: getTimestamp(), operator: currentUserEmail,
                     action: "Retomada de negociação",
-                    detail: "Negociação reaberta. Status alterado para: Em negociação"
+                    detail: "Cliente reativado. Status alterado para: Em negociação"
                 });
-
                 saveData();
                 closeModal('detailsModal');
-                document.getElementById('searchInput').value = ""; // Limpa a busca
-                switchTab('active'); // Volta para o painel principal automaticamente
+                document.getElementById('searchInput').value = "";
+                switchTab('active');
             }
         }
 
         function addInteraction(type, inputId) {
+            if(!currentUserEmail) return;
             const text = document.getElementById(inputId).value.trim();
             if(!text) { alert("O campo não pode estar vazio!"); return; }
 
             const neg = db.find(n => n.id === currentNegotiationId);
+            if (!neg.timeline) neg.timeline = [];
             
             neg.timeline.push({
-                date: getTimestamp(),
-                operator: currentUser,
+                date: getTimestamp(), operator: currentUserEmail,
                 action: type === 'Observação' ? "Inclusão de observação" : "Inclusão de proposta",
                 detail: text
             });
 
             document.getElementById(inputId).value = "";
             saveData();
-            renderTimeline(neg);
-        }
-
-        function noResponse() {
-            if(confirm("Cliente sem resposta? Isso apagará o registro completamente, pois não houve negociação. Tem certeza?")) {
-                db = db.filter(n => n.id !== currentNegotiationId);
-                saveData();
-                closeModal('detailsModal');
-                renderPanels();
-            }
         }
 
         function exportCSV() {
@@ -527,25 +635,21 @@
             let csvContent = "data:text/csv;charset=utf-8,";
             csvContent += "Data,Operador,Acao,Detalhes\n";
             
-            neg.timeline.forEach(t => {
-                let detailEscaped = t.detail.replace(/"/g, '""');
-                csvContent += `"${t.date}","${t.operator}","${t.action}","${detailEscaped}"\n`;
-            });
-
+            if (neg.timeline) {
+                neg.timeline.forEach(t => {
+                    let detailEscaped = t.detail.replace(/"/g, '""');
+                    csvContent += `"${t.date}","${t.operator}","${t.action}","${detailEscaped}"\n`;
+                });
+            }
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `historico_negociacao_${neg.clientName.replace(/\s+/g, '_')}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            link.setAttribute("download", `historico_${neg.clientName.replace(/\s+/g, '_')}.csv`);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { 
-            document.getElementById(id).style.display = 'none'; 
-            if(id === 'detailsModal') renderPanels();
-        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; currentNegotiationId = null; }
     </script>
 </body>
 </html>
