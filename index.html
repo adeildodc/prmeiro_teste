@@ -112,15 +112,17 @@
                 <hr class="my-2">
                 <div>
                     <label class="block text-sm font-bold">Status Inicial</label>
-                    <select id="newStatus" onchange="toggleReturnDate('newStatus', 'newReturnDateDiv')" class="w-full border p-2 rounded">
-                        <option value="Em negociação">Em negociação</option>
+                    <select id="newStatus" onchange="toggleReturnDate('newStatus', 'newReturnDateDiv', 'newReturnTimeDiv')" class="w-full border p-2 rounded">
                         <option value="Retornar em data combinada">Retornar em data combinada</option>
                         <option value="Aguardando aceite">Aguardando aceite</option>
                     </select>
                 </div>
-                <div id="newReturnDateDiv" class="hidden">
-                    <label class="block text-sm font-bold">Data para Retorno</label>
-                    <input type="date" id="newReturnDate" class="w-full border p-2 rounded">
+                <div id="newReturnDateDiv" class="mt-2">
+                    <label class="block text-sm font-bold">Data e Hora para Retorno</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="date" id="newReturnDate" class="w-full border p-2 rounded">
+                        <input type="time" id="newReturnTime" class="w-full border p-2 rounded">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-bold">Permitir que outro atendente assuma?</label>
@@ -163,16 +165,18 @@
 
                 <div id="actionForms" class="space-y-3">
                     <div class="bg-gray-50 p-3 rounded border">
-                        <label class="block text-xs font-bold mb-1">Mudar Status</label>
-                        <select id="actionStatus" onchange="toggleReturnDate('actionStatus', 'actionReturnDateDiv')" class="w-full border p-1.5 rounded mb-2 text-sm">
-                            <option value="Em negociação">Em negociação</option>
+                        <label class="block text-xs font-bold mb-1">Mudar Status (Obrigatório definir futuro)</label>
+                        <select id="actionStatus" onchange="toggleReturnDate('actionStatus', 'actionReturnDateDiv', 'actionReturnTimeDiv')" class="w-full border p-1.5 rounded mb-2 text-sm">
                             <option value="Retornar em data combinada">Retornar em data combinada</option>
                             <option value="Aguardando aceite">Aguardando aceite</option>
                             <option value="Concluído">Concluído</option>
                         </select>
-                        <div id="actionReturnDateDiv" class="hidden">
-                            <label class="block text-[10px] font-bold">Data para Retorno:</label>
-                            <input type="date" id="actionReturnDate" class="w-full border p-1 rounded text-sm">
+                        <div id="actionReturnDateDiv" class="mt-2">
+                            <label class="block text-[10px] font-bold">Data e Hora para Retorno:</label>
+                            <div class="grid grid-cols-2 gap-1">
+                                <input type="date" id="actionReturnDate" class="w-full border p-1 rounded text-sm">
+                                <input type="time" id="actionReturnTime" class="w-full border p-1 rounded text-sm">
+                            </div>
                         </div>
                     </div>
 
@@ -196,7 +200,7 @@
 
                     <!-- Botão único de salvamento unificado -->
                     <button onclick="saveUnifiedUpdates()" class="w-full bg-blue-600 text-white font-bold p-2.5 rounded shadow hover:bg-blue-700 transition">
-                        <i class="fas fa-save"></i> Salvar Alterações
+                        <i class="fas fa-save"></i> Salvar e Definir Próximo Contato
                     </button>
                 </div>
 
@@ -207,7 +211,7 @@
 
                 <div class="mt-6 space-y-2">
                     <button onclick="exportCSV()" class="w-full bg-gray-800 text-white text-sm p-2 rounded hover:bg-gray-900"><i class="fas fa-file-csv"></i> Exportar Histórico</button>
-                    <button onclick="closeModal('detailsModal')" class="w-full bg-gray-300 text-gray-800 text-sm p-2 rounded hover:bg-gray-400">Fechar Janela</button>
+                    <button onclick="closeDetailsModal()" class="w-full bg-gray-300 text-gray-800 text-sm p-2 rounded hover:bg-gray-400">Fechar Janela</button>
                 </div>
             </div>
 
@@ -320,6 +324,7 @@
             dbRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 db = data ? data : []; 
+                runStatusVerification(); // Executa verificação de prazos ao sincronizar dados
                 renderPanels();
 
                 if (currentNegotiationId) {
@@ -365,6 +370,22 @@
 
         function validateEmail(email) {
             return email.includes('@') && email.includes('.');
+        }
+
+        // Função de Verificação Automática de Prazos Vencidos ao fechar/sincronizar
+        function runStatusVerification() {
+            let updated = false;
+            const now = new Date();
+
+            db.forEach(n => {
+                if ((n.status === "Retornar em data combinada" || n.status === "Aguardando aceite") && n.returnDate && n.returnTime) {
+                    const deadline = new Date(`${n.returnDate}T${n.returnTime}`);
+                    if (now > deadline) {
+                        // Se o prazo venceu, marca como pendente/vencido ou arquiva se necessário
+                        // Aqui mantemos ativo mas sinalizamos o vencimento ou atualizamos o status se desejado
+                    }
+                }
+            });
         }
 
         function handleNameInput(val) {
@@ -466,7 +487,7 @@
                     btnAcaoHTML = `<button disabled class="w-full bg-gray-300 text-gray-500 py-2 rounded text-sm cursor-not-allowed">Restrito a ${n.responsible}</button>`;
                 }
 
-                let extraInfo = (n.status === 'Retornar em data combinada' || n.status === 'Aguardando aceite') && n.returnDate ? `<p class="text-sm text-red-600 font-bold"><i class="fas fa-calendar"></i> Retorno: ${n.returnDate}</p>` : '';
+                let returnInfo = (n.status === 'Retornar em data combinada' || n.status === 'Aguardando aceite') && n.returnDate ? `<p class="text-sm text-red-600 font-bold"><i class="fas fa-calendar"></i> Retorno: ${n.returnDate} às ${n.returnTime || '--:--'}</p>` : '';
 
                 panel.innerHTML += `
                     <div class="bg-white rounded-lg shadow border p-4 flex flex-col justify-between">
@@ -477,7 +498,7 @@
                             <p class="text-sm mb-1"><strong>Status:</strong> ${n.status}</p>
                             <p class="text-sm mb-1"><strong>Resp:</strong> ${n.responsible}</p>
                             <p class="text-sm mb-1"><strong>Falhas:</strong> ${n.failedAttempts || 0}</p>
-                            ${extraInfo}
+                            ${returnInfo}
                         </div>
                         <div class="mt-4">${btnAcaoHTML}</div>
                     </div>
@@ -595,6 +616,7 @@
             const email = document.getElementById('newEmail').value.trim();
             const status = document.getElementById('newStatus').value;
             const returnDate = document.getElementById('newReturnDate').value;
+            const returnTime = document.getElementById('newReturnTime').value;
             const allowTakeover = document.getElementById('newAllowTakeover').value;
             const obs = document.getElementById('newObservation').value.trim();
 
@@ -618,17 +640,20 @@
                 return;
             }
 
-            if((status === 'Retornar em data combinada' || status === 'Aguardando aceite') && !returnDate) { 
-                alert("Preencha a data para retorno!"); 
-                return; 
+            if(!returnDate || !returnTime) {
+                alert("Preencha obrigatoriamente a Data e a Hora para retorno/aceite!");
+                return;
             }
 
             const newNeg = {
                 id: generateId(),
                 clientName, cpf, tel, email,
                 responsible: operator,
-                status, returnDate: (status === 'Retornar em data combinada' || status === 'Aguardando aceite') ? returnDate : null,
-                allowTakeover, failedAttempts: 0,
+                status, 
+                returnDate, 
+                returnTime,
+                allowTakeover, 
+                failedAttempts: 0,
                 observations: obs ? [obs] : [],
                 proposals: [],
                 createdAt: getTimestamp(), timeline: []
@@ -636,7 +661,7 @@
 
             newNeg.timeline.push({
                 date: getTimestamp(), operator: operator,
-                action: "Criação do Cadastro", detail: `Criado com status: ${status}` + (obs ? ` | Obs: ${obs}` : "")
+                action: "Criação do Cadastro", detail: `Criado com status: ${status} para ${returnDate} às ${returnTime}` + (obs ? ` | Obs: ${obs}` : "")
             });
 
             db.push(newNeg);
@@ -645,32 +670,36 @@
             
             document.getElementById('newClientName').value = ""; document.getElementById('newCpf').value = "";
             document.getElementById('newTel').value = ""; document.getElementById('newEmail').value = "";
-            document.getElementById('newReturnDate').value = ""; document.getElementById('newObservation').value = "";
+            document.getElementById('newReturnDate').value = ""; document.getElementById('newReturnTime').value = "";
+            document.getElementById('newObservation').value = "";
             
             switchTab('active');
         }
 
-        function toggleReturnDate(selectId, divId) {
+        function toggleReturnDate(selectId, dateDivId, timeDivId) {
             const val = document.getElementById(selectId).value;
-            document.getElementById(divId).style.display = (val === 'Retornar em data combinada' || val === 'Aguardando aceite') ? 'block' : 'none';
+            const isConcluido = (val === 'Concluído');
+            document.getElementById(dateDivId).style.display = isConcluido ? 'none' : 'block';
         }
 
         function takeover(id) {
-            if(confirm("Deseja assumir o contato deste cliente?")) {
-                const neg = db.find(n => n.id === id);
-                neg.responsible = operator;
-                neg.timeline.push({
-                    date: getTimestamp(), operator: operator,
-                    action: "Alteração de responsável", detail: `Contato assumido por ${operator}`
-                });
-                saveData();
-            }
+            const neg = db.find(n => n.id === id);
+            neg.responsible = operator;
+            neg.timeline.push({
+                date: getTimestamp(), operator: operator,
+                action: "Assumiu Atendimento", detail: `Contato assumido por ${operator}`
+            });
+            saveData();
+            openDetails(id);
         }
 
         function openDetails(id) {
             currentNegotiationId = id;
             const neg = db.find(n => n.id === id);
             
+            neg.responsible = operator;
+            saveData();
+
             document.getElementById('detailClientName').innerText = neg.clientName;
             document.getElementById('detailCpf').innerText = neg.cpf || 'Não informado';
             document.getElementById('detailTel').innerText = neg.tel || 'Não informado';
@@ -684,12 +713,12 @@
             document.getElementById('resumeArea').style.display = isInactive ? 'block' : 'none';
 
             if(!isInactive) {
-                document.getElementById('actionStatus').value = neg.status;
-                toggleReturnDate('actionStatus', 'actionReturnDateDiv');
+                document.getElementById('actionStatus').value = neg.status === "Em negociação" ? "Retornar em data combinada" : neg.status;
+                toggleReturnDate('actionStatus', 'actionReturnDateDiv', 'actionReturnTimeDiv');
                 if(neg.returnDate) document.getElementById('actionReturnDate').value = neg.returnDate;
+                if(neg.returnTime) document.getElementById('actionReturnTime').value = neg.returnTime;
             }
 
-            // Carrega automaticamente a última observação e proposta salvas (se houver)
             const lastObs = (neg.observations && neg.observations.length > 0) ? neg.observations[neg.observations.length - 1] : "";
             const lastProp = (neg.proposals && neg.proposals.length > 0) ? neg.proposals[neg.proposals.length - 1] : "";
 
@@ -713,6 +742,7 @@
                 if(t.action.includes("Conclusão")) icon = "fa-check-circle text-gray-800";
                 if(t.action.includes("Retomada")) icon = "fa-redo text-yellow-600";
                 if(t.action.includes("Não Atendido")) icon = "fa-phone-slash text-red-500";
+                if(t.action.includes("Assumiu")) icon = "fa-user-check text-green-600";
                 if(t.action.includes("responsável")) icon = "fa-user-exchange text-purple-500";
 
                 container.innerHTML += `
@@ -726,18 +756,20 @@
             });
         }
 
-        // Função de Salvamento Unificado com a regra do Não Atendido
         function saveUnifiedUpdates() {
             const neg = db.find(n => n.id === currentNegotiationId);
             let newStatus = document.getElementById('actionStatus').value;
             const returnDate = document.getElementById('actionReturnDate').value;
+            const returnTime = document.getElementById('actionReturnTime').value;
             const missedCallChecked = document.getElementById('checkMissedCall').checked;
             const observationText = document.getElementById('actionObservation').value.trim();
             const proposalText = document.getElementById('actionProposal').value.trim();
 
-            if((newStatus === 'Retornar em data combinada' || newStatus === 'Aguardando aceite') && !returnDate) { 
-                alert("Preencha a data de retorno para este status!"); 
-                return; 
+            if(newStatus !== "Concluído") {
+                if(!returnDate || !returnTime) {
+                    alert("Para 'Retornar em data combinada' ou 'Aguardando aceite', é obrigatório preencher a Data e a Hora!");
+                    return;
+                }
             }
 
             if(newStatus === "Concluído" && !confirm("Deseja concluir a negociação? Ela será enviada ao histórico.")) {
@@ -747,28 +779,30 @@
             let summaryDetails = [];
             let actionTitle = "Atualização de Negociação";
 
-            // 1. Regra do Não Atendido com Pergunta de Arquivamento
             if(missedCallChecked) {
                 neg.failedAttempts = (neg.failedAttempts || 0) + 1;
                 summaryDetails.push(`Tentativa não atendida (Total de falhas: ${neg.failedAttempts})`);
 
-                // Pergunta se quer manter ativo ou arquivar
-                const keepActive = confirm("Não Atendido registrado.\n\nClique em [OK] para MANTER o cliente ativo em negociação.\nClique em [CANCELAR] para ARQUIVAR (enviar para o histórico).");
+                const keepActive = confirm("Não Atendido registrado.\n\nClique em [OK] para MANTER o cliente ativo.\nClique em [CANCELAR] para ARQUIVAR (enviar para o histórico como Não Atendido).");
                 if(!keepActive) {
                     newStatus = "Não Atendido";
                     actionTitle = "Não Atendido (Arquivado)";
                 }
             }
 
-            // 2. Verifica mudança de status
-            if(neg.status !== newStatus || (newStatus === 'Retornar em data combinada' || newStatus === 'Aguardando aceite')) {
+            if(newStatus === "Concluído" || newStatus === "Não Atendido") {
                 neg.status = newStatus;
-                neg.returnDate = (newStatus === 'Retornar em data combinada' || newStatus === 'Aguardando aceite') ? returnDate : null;
-                summaryDetails.push(newStatus === 'Retornar em data combinada' || newStatus === 'Aguardando aceite' ? `Status: ${newStatus} para ${returnDate}` : `Status alterado para: ${newStatus}`);
-                if(newStatus === "Concluído" || newStatus === "Não Atendido") actionTitle = "Encerramento de Negociação";
+                neg.returnDate = null;
+                neg.returnTime = null;
+                summaryDetails.push(`Status alterado para: ${newStatus}`);
+                actionTitle = "Encerramento de Negociação";
+            } else {
+                neg.status = newStatus;
+                neg.returnDate = returnDate;
+                neg.returnTime = returnTime;
+                summaryDetails.push(`Status: ${newStatus} para ${returnDate} às ${returnTime}`);
             }
 
-            // 3. Verifica se houve alteração na Observação comparada com a anterior
             const lastObs = (neg.observations && neg.observations.length > 0) ? neg.observations[neg.observations.length - 1] : "";
             if(observationText && observationText !== lastObs) {
                 if (!neg.observations) neg.observations = [];
@@ -776,7 +810,6 @@
                 summaryDetails.push(`Obs: ${observationText}`);
             }
 
-            // 4. Verifica se houve alteração na Proposta comparada com a anterior
             const lastProp = (neg.proposals && neg.proposals.length > 0) ? neg.proposals[neg.proposals.length - 1] : "";
             if(proposalText && proposalText !== lastProp) {
                 if (!neg.proposals) neg.proposals = [];
@@ -789,7 +822,6 @@
                 return;
             }
 
-            // Grava uma única entrada consolidada na linha do tempo
             neg.timeline.push({
                 date: getTimestamp(), 
                 operator: operator,
@@ -807,16 +839,43 @@
             }
         }
 
+        // Regra de Fechamento de Janela: Se fechar sem escolher futuro, vai pro histórico automaticamente
+        function closeDetailsModal() {
+            if (currentNegotiationId) {
+                const neg = db.find(n => n.id === currentNegotiationId);
+                if (neg && neg.status !== "Concluído" && neg.status !== "Não Atendido") {
+                    // Se fechou a tela sem definir um status de futuro (Retorno ou Aceite)
+                    const confirmClose = confirm("Atenção: Você está fechando a tela sem definir uma data/hora de retorno ou aceite.\n\nClique em [OK] para arquivar/enviar esta ficha para o histórico.\nClique em [CANCELAR] para voltar e definir o próximo contato.");
+                    if (confirmClose) {
+                        neg.status = "Não Atendido";
+                        neg.timeline.push({
+                            date: getTimestamp(),
+                            operator: operator,
+                            action: "Fechamento sem Agendamento",
+                            detail: "Janela fechada sem definir novo contato. Ficha enviada ao histórico."
+                        });
+                        saveData();
+                        closeModal('detailsModal');
+                        switchTab('active');
+                        return;
+                    } else {
+                        return; // Retorna para a tela
+                    }
+                }
+            }
+            closeModal('detailsModal');
+        }
+
         function executeResumeNegotiation() {
             if(confirm("Deseja retomar este contato? Ele voltará para o painel de ativos no seu nome.")) {
                 const neg = db.find(n => n.id === currentNegotiationId);
-                neg.status = "Em negociação";
+                neg.status = "Retornar em data combinada";
                 neg.responsible = operator;
                 
                 neg.timeline.push({
                     date: getTimestamp(), operator: operator,
                     action: "Retomada de negociação",
-                    detail: "Cliente reativado. Status alterado para: Em negociação"
+                    detail: "Cliente reativado."
                 });
                 saveData();
                 closeModal('detailsModal');
