@@ -75,16 +75,16 @@
         </div>
     </div>
 
-    <!-- MODAL: Identificação de Operador para Ações -->
-    <div id="operatorModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 w-80 shadow-xl text-center">
+    <!-- MODAL: Identificação de Operador para Ações (Garantido SEMPRE NA FRENTE com z-[999]) -->
+    <div id="operatorModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-[999]">
+        <div class="bg-white rounded-lg p-6 w-80 shadow-2xl text-center border-2 border-blue-600">
             <h3 class="text-lg font-bold mb-2">Identificação Obrigatória</h3>
             <p class="text-xs text-gray-600 mb-4">Confirme quem está realizando esta atualização:</p>
             <select id="actionOperatorSelect" class="w-full border p-2 rounded mb-3 bg-white text-sm">
                 <option value="">Selecione...</option>
             </select>
             <div class="flex space-x-2">
-                <button onclick="closeModal('operatorModal')" class="w-1/2 bg-gray-300 text-gray-800 p-2 rounded text-sm">Cancelar</button>
+                <button onclick="closeModal('operatorModal')" class="w-1/2 bg-gray-300 text-gray-800 p-2 rounded text-sm font-bold">Cancelar</button>
                 <button onclick="confirmActionWithOperator()" class="w-1/2 bg-blue-600 text-white p-2 rounded text-sm font-bold">Continuar</button>
             </div>
         </div>
@@ -388,7 +388,6 @@
             return email.includes('@') && email.includes('.');
         }
 
-        // Sistema de Autocompletar / Sugestão de Nomes em Tempo Real
         function handleNameInput(val) {
             const box = document.getElementById('nameSuggestions');
             const cleanVal = normalizeText(val);
@@ -399,7 +398,6 @@
                 return;
             }
 
-            // Pega nomes únicos já cadastrados no banco
             const existingNames = [...new Set(db.map(n => n.clientName))];
             const matches = existingNames.filter(name => normalizeText(name).includes(cleanVal));
 
