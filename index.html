@@ -94,7 +94,6 @@
                     <div class="col-span-2 relative">
                         <label class="block text-sm font-bold">Nome do Cliente</label>
                         <input type="text" id="newClientName" oninput="handleNameInput(this.value)" class="w-full border p-2 rounded" placeholder="Nome completo" autocomplete="off">
-                        <!-- Caixa de Sugestões de Nomes -->
                         <div id="nameSuggestions" class="absolute left-0 right-0 bg-white border rounded shadow-lg mt-1 max-h-40 overflow-y-auto hidden z-20"></div>
                     </div>
                     <div>
@@ -186,12 +185,12 @@
                     </div>
 
                     <div class="bg-gray-50 p-3 rounded border">
-                        <label class="block text-xs font-bold mb-1">Adicionar Observação (Opcional)</label>
+                        <label class="block text-xs font-bold mb-1">Adicionar / Editar Observação</label>
                         <textarea id="actionObservation" class="w-full border p-1.5 rounded text-sm" rows="2" placeholder="Digite se houver..."></textarea>
                     </div>
 
                     <div class="bg-gray-50 p-3 rounded border">
-                        <label class="block text-xs font-bold mb-1">Registrar Proposta (Opcional)</label>
+                        <label class="block text-xs font-bold mb-1">Adicionar / Editar Proposta</label>
                         <textarea id="actionProposal" class="w-full border p-1.5 rounded text-sm" rows="2" placeholder="Digite se houver..."></textarea>
                     </div>
 
@@ -630,20 +629,15 @@
                 responsible: operator,
                 status, returnDate: (status === 'Retornar em data combinada' || status === 'Aguardando aceite') ? returnDate : null,
                 allowTakeover, failedAttempts: 0,
+                observations: obs ? [obs] : [],
+                proposals: [],
                 createdAt: getTimestamp(), timeline: []
             };
 
             newNeg.timeline.push({
                 date: getTimestamp(), operator: operator,
-                action: "Criação do Cadastro", detail: `Criado com status: ${status}`
+                action: "Criação do Cadastro", detail: `Criado com status: ${status}` + (obs ? ` | Obs: ${obs}` : "")
             });
-
-            if(obs) {
-                newNeg.timeline.push({
-                    date: getTimestamp(), operator: operator,
-                    action: "Inclusão de observação", detail: obs
-                });
-            }
 
             db.push(newNeg);
             saveData(); 
@@ -695,10 +689,13 @@
                 if(neg.returnDate) document.getElementById('actionReturnDate').value = neg.returnDate;
             }
 
-            // Limpa os campos de texto do formulário unificado ao abrir
+            // Carrega automaticamente a última observação e proposta salvas (se houver)
+            const lastObs = (neg.observations && neg.observations.length > 0) ? neg.observations[neg.observations.length - 1] : "";
+            const lastProp = (neg.proposals && neg.proposals.length > 0) ? neg.proposals[neg.proposals.length - 1] : "";
+
             document.getElementById('checkMissedCall').checked = false;
-            document.getElementById('actionObservation').value = "";
-            document.getElementById('actionProposal').value = "";
+            document.getElementById('actionObservation').value = lastObs;
+            document.getElementById('actionProposal').value = lastProp;
 
             renderTimeline(neg);
             openModal('detailsModal');
@@ -729,10 +726,10 @@
             });
         }
 
-        // Função Única de Salvamento Unificado
+        // Função de Salvamento Unificado com a regra do Não Atendido
         function saveUnifiedUpdates() {
             const neg = db.find(n => n.id === currentNegotiationId);
-            const newStatus = document.getElementById('actionStatus').value;
+            let newStatus = document.getElementById('actionStatus').value;
             const returnDate = document.getElementById('actionReturnDate').value;
             const missedCallChecked = document.getElementById('checkMissedCall').checked;
             const observationText = document.getElementById('actionObservation').value.trim();
@@ -750,10 +747,17 @@
             let summaryDetails = [];
             let actionTitle = "Atualização de Negociação";
 
-            // 1. Verifica falha de contato
+            // 1. Regra do Não Atendido com Pergunta de Arquivamento
             if(missedCallChecked) {
                 neg.failedAttempts = (neg.failedAttempts || 0) + 1;
-                summaryDetails.push(`Tentativa não atendida registrada (Total de falhas: ${neg.failedAttempts})`);
+                summaryDetails.push(`Tentativa não atendida (Total de falhas: ${neg.failedAttempts})`);
+
+                // Pergunta se quer manter ativo ou arquivar
+                const keepActive = confirm("Não Atendido registrado.\n\nClique em [OK] para MANTER o cliente ativo em negociação.\nClique em [CANCELAR] para ARQUIVAR (enviar para o histórico).");
+                if(!keepActive) {
+                    newStatus = "Não Atendido";
+                    actionTitle = "Não Atendido (Arquivado)";
+                }
             }
 
             // 2. Verifica mudança de status
@@ -761,26 +765,27 @@
                 neg.status = newStatus;
                 neg.returnDate = (newStatus === 'Retornar em data combinada' || newStatus === 'Aguardando aceite') ? returnDate : null;
                 summaryDetails.push(newStatus === 'Retornar em data combinada' || newStatus === 'Aguardando aceite' ? `Status: ${newStatus} para ${returnDate}` : `Status alterado para: ${newStatus}`);
-                if(newStatus === "Concluído") actionTitle = "Conclusão da Negociação";
+                if(newStatus === "Concluído" || newStatus === "Não Atendido") actionTitle = "Encerramento de Negociação";
             }
 
-            // 3. Verifica Observação
-            if(observationText) {
+            // 3. Verifica se houve alteração na Observação comparada com a anterior
+            const lastObs = (neg.observations && neg.observations.length > 0) ? neg.observations[neg.observations.length - 1] : "";
+            if(observationText && observationText !== lastObs) {
                 if (!neg.observations) neg.observations = [];
                 neg.observations.push(observationText);
                 summaryDetails.push(`Obs: ${observationText}`);
             }
 
-            // 4. Verifica Proposta
-            if(proposalText) {
+            // 4. Verifica se houve alteração na Proposta comparada com a anterior
+            const lastProp = (neg.proposals && neg.proposals.length > 0) ? neg.proposals[neg.proposals.length - 1] : "";
+            if(proposalText && proposalText !== lastProp) {
                 if (!neg.proposals) neg.proposals = [];
                 neg.proposals.push(proposalText);
                 summaryDetails.push(`Proposta: ${proposalText}`);
             }
 
-            // Se nada foi preenchido/alterado
             if(summaryDetails.length === 0) {
-                alert("Nenhuma alteração ou preenchimento foi feito para salvar.");
+                alert("Nenhuma alteração foi feita para salvar.");
                 return;
             }
 
@@ -794,15 +799,11 @@
 
             saveData();
             
-            // Limpa campos após salvar
-            document.getElementById('checkMissedCall').checked = false;
-            document.getElementById('actionObservation').value = "";
-            document.getElementById('actionProposal').value = "";
-
-            if(newStatus === "Concluído") {
+            if(newStatus === "Concluído" || newStatus === "Não Atendido") {
                 closeModal('detailsModal');
+                switchTab('active');
             } else {
-                openDetails(currentNegotiationId); // Atualiza os dados na tela do modal
+                openDetails(currentNegotiationId);
             }
         }
 
