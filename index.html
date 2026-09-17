@@ -13,12 +13,37 @@
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
 
-    <!-- Aplicativo Principal (Abre Direto) -->
-    <div id="appScreen">
+    <!-- Tela de Identificação de Operador (Com Lista para evitar duplicidade) -->
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gray-800">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-96 text-center">
+            <h2 class="text-2xl font-bold mb-2 text-gray-800">Identificação do Operador</h2>
+            <p class="mb-4 text-sm text-gray-600">Selecione seu nome ou cadastre um novo</p>
+            
+            <div id="operatorSelectContainer" class="mb-4">
+                <label class="block text-xs font-bold text-gray-700 mb-1 text-left">Operador Cadastrado:</label>
+                <select id="operatorSelect" class="w-full border p-2 rounded mb-2 bg-white" onchange="checkOperatorSelection()">
+                    <option value="">Selecione...</option>
+                </select>
+                <button onclick="showNewOperatorInput()" id="btnShowNewOp" class="text-xs text-blue-600 underline text-left block">Cadastrar novo operador</button>
+            </div>
+
+            <div id="operatorNewContainer" class="mb-4 hidden">
+                <label class="block text-xs font-bold text-gray-700 mb-1 text-left">Nome do Novo Operador:</label>
+                <input type="text" id="newOperatorNameInput" class="w-full border p-2 rounded mb-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Adeildo">
+                <button onclick="hideNewOperatorInput()" class="text-xs text-gray-600 underline text-left block">Selecionar da lista existente</button>
+            </div>
+
+            <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700 transition">Entrar no CRM</button>
+        </div>
+    </div>
+
+    <!-- Aplicativo Principal -->
+    <div id="appScreen" class="hidden">
         <header class="bg-blue-800 text-white p-4 shadow-md flex justify-between items-center">
             <h1 class="text-xl font-bold"><i class="fas fa-handshake"></i> CRM Cobrança Ativa</h1>
             <div class="flex items-center space-x-4">
-                <span class="text-sm">Operador: <strong id="operatorNameDisplay">Adeildo</strong></span>
+                <span class="text-sm">Operador: <strong id="operatorNameDisplay"></strong></span>
+                <button onclick="logout()" class="text-sm underline hover:text-gray-300">Trocar</button>
             </div>
         </header>
 
@@ -46,6 +71,21 @@
             <div class="bg-white rounded shadow p-4">
                 <h2 class="text-xl font-bold mb-4">Negociações Concluídas e Não Atendidas</h2>
                 <div id="historyList" class="space-y-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Identificação de Operador para Ações -->
+    <div id="operatorModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-80 shadow-xl text-center">
+            <h3 class="text-lg font-bold mb-2">Identificação Obrigatória</h3>
+            <p class="text-xs text-gray-600 mb-4">Confirme quem está realizando esta atualização:</p>
+            <select id="actionOperatorSelect" class="w-full border p-2 rounded mb-3 bg-white text-sm">
+                <option value="">Selecione...</option>
+            </select>
+            <div class="flex space-x-2">
+                <button onclick="closeModal('operatorModal')" class="w-1/2 bg-gray-300 text-gray-800 p-2 rounded text-sm">Cancelar</button>
+                <button onclick="confirmActionWithOperator()" class="w-1/2 bg-blue-600 text-white p-2 rounded text-sm font-bold">Continuar</button>
             </div>
         </div>
     </div>
@@ -148,11 +188,11 @@
                             <label class="block text-xs font-bold">Data:</label>
                             <input type="date" id="actionReturnDate" class="w-full border p-1 rounded text-sm">
                         </div>
-                        <button onclick="updateStatus()" class="w-full bg-blue-600 text-white text-sm p-2 rounded hover:bg-blue-700">Atualizar Status</button>
+                        <button onclick="requestOperatorAction('updateStatus')" class="w-full bg-blue-600 text-white text-sm p-2 rounded hover:bg-blue-700">Atualizar Status</button>
                     </div>
 
                     <div class="bg-gray-50 p-3 rounded border border-red-200">
-                        <button onclick="registerMissedCall()" class="w-full bg-red-100 text-red-700 font-bold text-sm p-2 rounded hover:bg-red-200 border border-red-300">
+                        <button onclick="requestOperatorAction('registerMissedCall')" class="w-full bg-red-100 text-red-700 font-bold text-sm p-2 rounded hover:bg-red-200 border border-red-300">
                             <i class="fas fa-phone-slash"></i> Registrar Não Atendimento
                         </button>
                     </div>
@@ -160,19 +200,19 @@
                     <div class="bg-gray-50 p-3 rounded border">
                         <label class="block text-sm font-bold mb-1">Adicionar Observação</label>
                         <textarea id="actionObservation" class="w-full border p-2 rounded mb-2 text-sm" rows="2"></textarea>
-                        <button onclick="addInteraction('Observação', 'actionObservation')" class="w-full bg-blue-600 text-white text-sm p-2 rounded hover:bg-blue-700">Salvar Obs.</button>
+                        <button onclick="requestOperatorAction('addObservation')" class="w-full bg-blue-600 text-white text-sm p-2 rounded hover:bg-blue-700">Salvar Obs.</button>
                     </div>
 
                     <div class="bg-gray-50 p-3 rounded border">
                         <label class="block text-sm font-bold mb-1">Registrar Proposta</label>
                         <textarea id="actionProposal" class="w-full border p-2 rounded mb-2 text-sm" rows="2"></textarea>
-                        <button onclick="addInteraction('Proposta', 'actionProposal')" class="w-full bg-green-600 text-white text-sm p-2 rounded hover:bg-green-700">Salvar Proposta</button>
+                        <button onclick="requestOperatorAction('addProposal')" class="w-full bg-green-600 text-white text-sm p-2 rounded hover:bg-green-700">Salvar Proposta</button>
                     </div>
                 </div>
 
                 <div id="resumeArea" class="hidden bg-yellow-50 p-4 rounded border border-yellow-200 mb-4 mt-2">
                     <p class="text-sm text-yellow-800 font-bold mb-2"><i class="fas fa-exclamation-circle"></i> Negociação Inativa</p>
-                    <button onclick="resumeNegotiation()" class="w-full bg-yellow-600 text-white text-sm p-2 rounded font-bold hover:bg-yellow-700 shadow">Retomar Negociação</button>
+                    <button onclick="requestOperatorAction('resumeNegotiation')" class="w-full bg-yellow-600 text-white text-sm p-2 rounded font-bold hover:bg-yellow-700 shadow">Retomar Negociação</button>
                 </div>
 
                 <div class="mt-6 space-y-2">
@@ -188,7 +228,7 @@
         </div>
     </div>
 
-    <!-- Lógica e Conexão Firebase (Abre Direto no Painel) -->
+    <!-- Lógica e Conexão Firebase -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyC69ynCbWuJmE4JmstjPdpMSdWlSOU1hPM",
@@ -204,18 +244,107 @@
         const database = firebase.database();
         
         let dbRef = null;
-        let dbListener = null;
-        let operator = "Adeildo"; // Nome padrão definido para abrir direto
+        let operatorsRef = null;
+        let operator = localStorage.getItem('crm_operator') || "";
         let currentNegotiationId = null;
         let db = []; 
+        let operatorsList = [];
+        let pendingActionType = null;
 
         window.onload = function() {
             startDatabase();
         };
 
         function startDatabase() {
+            // Ouvir operadores
+            operatorsRef = database.ref('crm_operators');
+            operatorsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                operatorsList = data ? data : [];
+                updateOperatorDropdowns();
+                
+                // Se já tem operador salvo no localStorage e ele existe na lista, entra direto
+                if (operator && operatorsList.includes(operator)) {
+                    startApp(operator);
+                } else {
+                    document.getElementById('loginScreen').style.display = 'flex';
+                }
+            });
+        }
+
+        function updateOperatorDropdowns() {
+            const selectLogin = document.getElementById('operatorSelect');
+            const selectAction = document.getElementById('actionOperatorSelect');
+            
+            let optionsHTML = '<option value="">Selecione...</option>';
+            operatorsList.forEach(op => {
+                optionsHTML += `<option value="${op}">${op}</option>`;
+            });
+
+            selectLogin.innerHTML = optionsHTML;
+            selectAction.innerHTML = optionsHTML;
+
+            if (operator) {
+                selectLogin.value = operator;
+                selectAction.value = operator;
+            }
+        }
+
+        function showNewOperatorInput() {
+            document.getElementById('operatorSelectContainer').style.display = 'none';
+            document.getElementById('operatorNewContainer').style.display = 'block';
+            document.getElementById('operatorSelect').value = "";
+        }
+
+        function hideNewOperatorInput() {
+            document.getElementById('operatorNewContainer').style.display = 'none';
+            document.getElementById('operatorSelectContainer').style.display = 'block';
+            document.getElementById('newOperatorNameInput').value = "";
+        }
+
+        function checkOperatorSelection() {
+            // Apenas interface
+        }
+
+        function login() {
+            let name = "";
+            const selectVal = document.getElementById('operatorSelect').value.trim();
+            const inputVal = document.getElementById('newOperatorNameInput').value.trim();
+
+            if (inputVal) {
+                name = inputVal;
+                // Adiciona à lista de operadores se não existir
+                if (!operatorsList.includes(name)) {
+                    operatorsList.push(name);
+                    operatorsRef.set(operatorsList);
+                }
+            } else if (selectVal) {
+                name = selectVal;
+            }
+
+            if (!name) { 
+                alert("Selecione ou digite o nome do operador!"); 
+                return; 
+            }
+
+            localStorage.setItem('crm_operator', name);
+            startApp(name);
+        }
+
+        function logout() {
+            localStorage.removeItem('crm_operator');
+            location.reload();
+        }
+
+        function startApp(name) {
+            operator = name;
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display = 'block';
+            document.getElementById('operatorNameDisplay').innerText = operator;
+            
+            // Iniciar dados do CRM
             dbRef = database.ref('crm_data');
-            dbListener = dbRef.on('value', (snapshot) => {
+            dbRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 db = data ? data : []; 
                 renderPanels();
@@ -231,9 +360,6 @@
                         closeModal('detailsModal');
                     }
                 }
-            }, (error) => {
-                console.error("Erro no banco de dados:", error);
-                alert("Erro ao conectar ao Realtime Database.");
             });
         }
 
@@ -296,7 +422,7 @@
                     btnAcaoHTML = `<button disabled class="w-full bg-gray-300 text-gray-500 py-2 rounded text-sm cursor-not-allowed">Restrito a ${n.responsible}</button>`;
                 }
 
-                let extraInfo = n.status === 'Retornar em data combinada' ? `<p class="text-sm text-red-600 font-bold"><i class="fas fa-calendar"></i> Retorno: ${n.returnDate}</p>` : '';
+                let extraInfo = (n.status === 'Retornar em data combinada' || n.status === 'Aguardando aceite') && n.returnDate ? `<p class="text-sm text-red-600 font-bold"><i class="fas fa-calendar"></i> Retorno: ${n.returnDate}</p>` : '';
 
                 panel.innerHTML += `
                     <div class="bg-white rounded-lg shadow border p-4 flex flex-col justify-between">
@@ -306,6 +432,7 @@
                             <div class="text-xs text-gray-600 mb-2 border-b pb-2">CPF: ${n.cpf || '-'} | Tel: ${n.tel || '-'}</div>
                             <p class="text-sm mb-1"><strong>Status:</strong> ${n.status}</p>
                             <p class="text-sm mb-1"><strong>Resp:</strong> ${n.responsible}</p>
+                            <p class="text-sm mb-1"><strong>Falhas:</strong> ${n.failedAttempts || 0}</p>
                             ${extraInfo}
                         </div>
                         <div class="mt-4">${btnAcaoHTML}</div>
@@ -397,13 +524,13 @@
             const obs = document.getElementById('newObservation').value.trim();
 
             if(!clientName || !tel || !email) { alert("Nome, Telefone e Email são obrigatórios!"); return; }
-            if(status === 'Retornar em data combinada' && !returnDate) { alert("Preencha a data de retorno!"); return; }
+            if((status === 'Retornar em data combinada' || status === 'Aguardando aceite') && !returnDate) { alert("Preencha a data para retorno!"); return; }
 
             const newNeg = {
                 id: generateId(),
                 clientName, cpf, tel, email,
                 responsible: operator,
-                status, returnDate: returnDate || null,
+                status, returnDate: (status === 'Retornar em data combinada' || status === 'Aguardando aceite') ? returnDate : null,
                 allowTakeover, failedAttempts: 0,
                 createdAt: getTimestamp(), timeline: []
             };
@@ -433,7 +560,7 @@
 
         function toggleReturnDate(selectId, divId) {
             const val = document.getElementById(selectId).value;
-            document.getElementById(divId).style.display = val === 'Retornar em data combinada' ? 'block' : 'none';
+            document.getElementById(divId).style.display = (val === 'Retornar em data combinada' || val === 'Aguardando aceite') ? 'block' : 'none';
         }
 
         function takeover(id) {
@@ -467,6 +594,7 @@
             if(!isInactive) {
                 document.getElementById('actionStatus').value = neg.status;
                 toggleReturnDate('actionStatus', 'actionReturnDateDiv');
+                if(neg.returnDate) document.getElementById('actionReturnDate').value = neg.returnDate;
             }
 
             renderTimeline(neg);
@@ -484,7 +612,7 @@
                 if(t.action.includes("Proposta")) icon = "fa-handshake text-green-500";
                 if(t.action.includes("Conclusão")) icon = "fa-check-circle text-gray-800";
                 if(t.action.includes("Retomada")) icon = "fa-redo text-yellow-600";
-                if(t.action.includes("Não Atendida")) icon = "fa-phone-slash text-red-500";
+                if(t.action.includes("Não Atendido")) icon = "fa-phone-slash text-red-500";
                 if(t.action.includes("responsável")) icon = "fa-user-exchange text-purple-500";
 
                 container.innerHTML += `
@@ -498,38 +626,62 @@
             });
         }
 
-        function updateStatus() {
+        // Solicita identificação do operador antes de qualquer ação
+        function requestOperatorAction(actionType) {
+            pendingActionType = actionType;
+            document.getElementById('actionOperatorSelect').value = operator; // Sugere o atual
+            openModal('operatorModal');
+        }
+
+        function confirmActionWithOperator() {
+            const selectedOp = document.getElementById('actionOperatorSelect').value.trim();
+            if(!selectedOp) { alert("Selecione o operador!"); return; }
+            
+            operator = selectedOp;
+            localStorage.setItem('crm_operator', operator);
+            document.getElementById('operatorNameDisplay').innerText = operator;
+            closeModal('operatorModal');
+
+            // Executa a ação pendente
+            if(pendingActionType === 'updateStatus') executeUpdateStatus();
+            else if(pendingActionType === 'registerMissedCall') executeRegisterMissedCall();
+            else if(pendingActionType === 'addObservation') executeAddObservation();
+            else if(pendingActionType === 'addProposal') executeAddProposal();
+            else if(pendingActionType === 'resumeNegotiation') executeResumeNegotiation();
+        }
+
+        function executeUpdateStatus() {
             const status = document.getElementById('actionStatus').value;
             const date = document.getElementById('actionReturnDate').value;
             const neg = db.find(n => n.id === currentNegotiationId);
 
-            if(status === 'Retornar em data combinada' && !date) { alert("Preencha a data!"); return; }
+            if((status === 'Retornar em data combinada' || status === 'Aguardando aceite') && !date) { alert("Preencha a data!"); return; }
             if(status === "Concluído" && !confirm("Deseja concluir a negociação? Ela será enviada ao histórico.")) {
                 document.getElementById('actionStatus').value = neg.status;
                 return;
             }
 
             neg.status = status;
-            if(status === 'Retornar em data combinada') neg.returnDate = date;
+            neg.returnDate = (status === 'Retornar em data combinada' || status === 'Aguardando aceite') ? date : null;
 
             neg.timeline.push({
                 date: getTimestamp(), operator: operator,
                 action: status === "Concluído" ? "Conclusão da negociação" : "Alteração de status",
-                detail: status === 'Retornar em data combinada' ? `${status} para ${date}` : status
+                detail: (status === 'Retornar em data combinada' || status === 'Aguardando aceite') ? `${status} para ${date}` : status
             });
             saveData();
             if(status === "Concluído") closeModal('detailsModal');
         }
 
-        function registerMissedCall() {
+        function executeRegisterMissedCall() {
             const neg = db.find(n => n.id === currentNegotiationId);
             neg.failedAttempts = (neg.failedAttempts || 0) + 1;
-            neg.status = "Não Atendido";
+            // Mantém o status atual e continua visível no painel ativo, acumulando falhas
 
             neg.timeline.push({
                 date: getTimestamp(), operator: operator,
                 action: "Tentativa Não Atendida",
-                detail: `Ligação não atendida. Total de tentativas perdidas: ${neg.failedAttempts}`
+                detail: `Ligação não atendida registrada. Total de falhas: ${neg.failedAttempts}`
             });
 
             saveData();
@@ -537,7 +689,41 @@
             switchTab('active');
         }
 
-        function resumeNegotiation() {
+        function executeAddObservation() {
+            const text = document.getElementById('actionObservation').value.trim();
+            if(!text) { alert("O campo não pode estar vazio!"); return; }
+
+            const neg = db.find(n => n.id === currentNegotiationId);
+            if (!neg.timeline) neg.timeline = [];
+            
+            neg.timeline.push({
+                date: getTimestamp(), operator: operator,
+                action: "Inclusão de observação",
+                detail: text
+            });
+
+            document.getElementById('actionObservation').value = "";
+            saveData();
+        }
+
+        function executeAddProposal() {
+            const text = document.getElementById('actionProposal').value.trim();
+            if(!text) { alert("O campo não pode estar vazio!"); return; }
+
+            const neg = db.find(n => n.id === currentNegotiationId);
+            if (!neg.timeline) neg.timeline = [];
+            
+            neg.timeline.push({
+                date: getTimestamp(), operator: operator,
+                action: "Inclusão de proposta",
+                detail: text
+            });
+
+            document.getElementById('actionProposal').value = "";
+            saveData();
+        }
+
+        function executeResumeNegotiation() {
             if(confirm("Deseja retomar este contato? Ele voltará para o painel de ativos no seu nome.")) {
                 const neg = db.find(n => n.id === currentNegotiationId);
                 neg.status = "Em negociação";
@@ -553,23 +739,6 @@
                 document.getElementById('searchInput').value = "";
                 switchTab('active');
             }
-        }
-
-        function addInteraction(type, inputId) {
-            const text = document.getElementById(inputId).value.trim();
-            if(!text) { alert("O campo não pode estar vazio!"); return; }
-
-            const neg = db.find(n => n.id === currentNegotiationId);
-            if (!neg.timeline) neg.timeline = [];
-            
-            neg.timeline.push({
-                date: getTimestamp(), operator: operator,
-                action: type === 'Observação' ? "Inclusão de observação" : "Inclusão de proposta",
-                detail: text
-            });
-
-            document.getElementById(inputId).value = "";
-            saveData();
         }
 
         function exportCSV() {
@@ -591,7 +760,7 @@
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; currentNegotiationId = null; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id === 'detailsModal') currentNegotiationId = null; }
     </script>
 </body>
 </html>
