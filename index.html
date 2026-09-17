@@ -13,23 +13,12 @@
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
 
-    <!-- Tela de Identificação (Apenas pede o nome do operador) -->
-    <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gray-800">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-96 text-center">
-            <h2 class="text-2xl font-bold mb-4 text-gray-800">Bem-vindo ao CRM</h2>
-            <p class="mb-4 text-sm text-gray-600">Identifique-se para começar</p>
-            <input type="text" id="operatorName" class="w-full border p-2 rounded mb-4 focus:ring-2 focus:ring-blue-500 outline-none text-center" placeholder="Ex: Adeildo">
-            <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700 transition">Entrar</button>
-        </div>
-    </div>
-
-    <!-- Aplicativo Principal -->
-    <div id="appScreen" class="hidden">
+    <!-- Aplicativo Principal (Abre Direto) -->
+    <div id="appScreen">
         <header class="bg-blue-800 text-white p-4 shadow-md flex justify-between items-center">
             <h1 class="text-xl font-bold"><i class="fas fa-handshake"></i> CRM Cobrança Ativa</h1>
             <div class="flex items-center space-x-4">
-                <span class="text-sm">Operador: <strong id="operatorNameDisplay"></strong></span>
-                <button onclick="logout()" class="text-sm underline hover:text-gray-300">Trocar</button>
+                <span class="text-sm">Operador: <strong id="operatorNameDisplay">Adeildo</strong></span>
             </div>
         </header>
 
@@ -199,7 +188,7 @@
         </div>
     </div>
 
-    <!-- Lógica e Conexão Firebase (Direta, sem Autenticação por e-mail) -->
+    <!-- Lógica e Conexão Firebase (Abre Direto no Painel) -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyC69ynCbWuJmE4JmstjPdpMSdWlSOU1hPM",
@@ -216,35 +205,13 @@
         
         let dbRef = null;
         let dbListener = null;
-        let operator = localStorage.getItem('crm_operator') || "";
+        let operator = "Adeildo"; // Nome padrão definido para abrir direto
         let currentNegotiationId = null;
         let db = []; 
 
         window.onload = function() {
-            if (operator) {
-                startApp(operator);
-            }
-        };
-
-        function login() {
-            const name = document.getElementById('operatorName').value.trim();
-            if (!name) { alert("Digite seu nome!"); return; }
-            localStorage.setItem('crm_operator', name);
-            startApp(name);
-        }
-
-        function logout() {
-            localStorage.removeItem('crm_operator');
-            location.reload();
-        }
-
-        function startApp(name) {
-            operator = name;
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('appScreen').style.display = 'block';
-            document.getElementById('operatorNameDisplay').innerText = operator;
             startDatabase();
-        }
+        };
 
         function startDatabase() {
             dbRef = database.ref('crm_data');
@@ -266,7 +233,7 @@
                 }
             }, (error) => {
                 console.error("Erro no banco de dados:", error);
-                alert("Erro ao conectar ao Realtime Database. Verifique se as regras do banco permitem leitura/escrita pública (ou ajuste conforme necessário).");
+                alert("Erro ao conectar ao Realtime Database.");
             });
         }
 
