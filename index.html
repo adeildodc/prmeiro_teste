@@ -13,7 +13,7 @@
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
 
-    <!-- Tela de Identificação de Operador (Com Lista para evitar duplicidade) -->
+    <!-- Tela de Identificação de Operador -->
     <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gray-800">
         <div class="bg-white p-8 rounded-lg shadow-lg w-96 text-center">
             <h2 class="text-2xl font-bold mb-2 text-gray-800">Identificação do Operador</h2>
@@ -21,10 +21,10 @@
             
             <div id="operatorSelectContainer" class="mb-4">
                 <label class="block text-xs font-bold text-gray-700 mb-1 text-left">Operador Cadastrado:</label>
-                <select id="operatorSelect" class="w-full border p-2 rounded mb-2 bg-white" onchange="checkOperatorSelection()">
+                <select id="operatorSelect" class="w-full border p-2 rounded mb-2 bg-white">
                     <option value="">Selecione...</option>
                 </select>
-                <button onclick="showNewOperatorInput()" id="btnShowNewOp" class="text-xs text-blue-600 underline text-left block">Cadastrar novo operador</button>
+                <button onclick="showNewOperatorInput()" class="text-xs text-blue-600 underline text-left block">Cadastrar novo operador</button>
             </div>
 
             <div id="operatorNewContainer" class="mb-4 hidden">
@@ -90,33 +90,35 @@
         </div>
     </div>
 
-    <!-- MODAL: Nova Negociação com Verificação de Duplicidade -->
+    <!-- MODAL: Nova Negociação com Validação Rigorosa e Autocompletar -->
     <div id="newNegotiationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
             <h2 class="text-xl font-bold mb-4">Iniciar Novo Cadastro</h2>
             
             <div id="stepSearchDuplicate" class="mb-4 p-4 border rounded bg-gray-50">
-                <label class="block text-sm font-bold mb-2">Verifique se o cliente já existe (Nome ou CPF):</label>
+                <label class="block text-sm font-bold mb-2">Verifique se o devedor já existe (CPF, E-mail, Telefone ou Nome):</label>
                 <div class="flex gap-2">
-                    <input type="text" id="duplicateSearchInput" class="w-full border p-2 rounded" placeholder="Digite aqui...">
+                    <input type="text" id="duplicateSearchInput" class="w-full border p-2 rounded" placeholder="Digite CPF, e-mail, tel ou nome...">
                     <button onclick="checkDuplicate()" class="bg-gray-800 text-white px-4 rounded font-bold hover:bg-gray-900">Buscar</button>
                 </div>
                 <div id="duplicateResultArea" class="mt-3"></div>
             </div>
 
             <div id="stepFillData" class="space-y-3 hidden">
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="col-span-2">
+                <div class="grid grid-cols-2 gap-2 relative">
+                    <div class="col-span-2 relative">
                         <label class="block text-sm font-bold">Nome do Cliente</label>
-                        <input type="text" id="newClientName" class="w-full border p-2 rounded">
+                        <input type="text" id="newClientName" oninput="handleNameInput(this.value)" class="w-full border p-2 rounded" placeholder="Nome completo" autocomplete="off">
+                        <!-- Caixa de Sugestões de Nomes -->
+                        <div id="nameSuggestions" class="absolute left-0 right-0 bg-white border rounded shadow-lg mt-1 max-h-40 overflow-y-auto hidden z-20"></div>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold">CPF</label>
-                        <input type="text" id="newCpf" class="w-full border p-2 rounded" placeholder="000.000.000-00">
+                        <label class="block text-sm font-bold">CPF (11 dígitos)</label>
+                        <input type="text" id="newCpf" class="w-full border p-2 rounded" placeholder="000.000.000-00" maxlength="14">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold">Telefone</label>
-                        <input type="text" id="newTel" class="w-full border p-2 rounded" placeholder="(00) 00000-0000">
+                        <label class="block text-sm font-bold">Telefone (DDD + 8/9 Números)</label>
+                        <input type="text" id="newTel" class="w-full border p-2 rounded" placeholder="(00) 00000-0000" maxlength="15">
                     </div>
                     <div class="col-span-2">
                         <label class="block text-sm font-bold">E-mail</label>
@@ -256,14 +258,12 @@
         };
 
         function startDatabase() {
-            // Ouvir operadores
             operatorsRef = database.ref('crm_operators');
             operatorsRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 operatorsList = data ? data : [];
                 updateOperatorDropdowns();
                 
-                // Se já tem operador salvo no localStorage e ele existe na lista, entra direto
                 if (operator && operatorsList.includes(operator)) {
                     startApp(operator);
                 } else {
@@ -302,10 +302,6 @@
             document.getElementById('newOperatorNameInput').value = "";
         }
 
-        function checkOperatorSelection() {
-            // Apenas interface
-        }
-
         function login() {
             let name = "";
             const selectVal = document.getElementById('operatorSelect').value.trim();
@@ -313,7 +309,6 @@
 
             if (inputVal) {
                 name = inputVal;
-                // Adiciona à lista de operadores se não existir
                 if (!operatorsList.includes(name)) {
                     operatorsList.push(name);
                     operatorsRef.set(operatorsList);
@@ -342,7 +337,6 @@
             document.getElementById('appScreen').style.display = 'block';
             document.getElementById('operatorNameDisplay').innerText = operator;
             
-            // Iniciar dados do CRM
             dbRef = database.ref('crm_data');
             dbRef.on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -369,6 +363,65 @@
 
         function getTimestamp() { return new Date().toLocaleString('pt-BR'); }
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+
+        function normalizeText(str) {
+            if (!str) return "";
+            return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        }
+
+        function cleanNumbers(str) {
+            if (!str) return "";
+            return str.replace(/\D/g, "");
+        }
+
+        function validateCpf(cpf) {
+            const clean = cleanNumbers(cpf);
+            return clean.length === 11;
+        }
+
+        function validatePhone(phone) {
+            const clean = cleanNumbers(phone);
+            return clean.length === 10 || clean.length === 11;
+        }
+
+        function validateEmail(email) {
+            return email.includes('@') && email.includes('.');
+        }
+
+        // Sistema de Autocompletar / Sugestão de Nomes em Tempo Real
+        function handleNameInput(val) {
+            const box = document.getElementById('nameSuggestions');
+            const cleanVal = normalizeText(val);
+
+            if (cleanVal.length < 2) {
+                box.innerHTML = '';
+                box.style.display = 'none';
+                return;
+            }
+
+            // Pega nomes únicos já cadastrados no banco
+            const existingNames = [...new Set(db.map(n => n.clientName))];
+            const matches = existingNames.filter(name => normalizeText(name).includes(cleanVal));
+
+            if (matches.length === 0) {
+                box.innerHTML = '';
+                box.style.display = 'none';
+                return;
+            }
+
+            let html = '';
+            matches.forEach(name => {
+                html += `<div onclick="selectSuggestedName('${name.replace(/'/g, "\\'")}')" class="p-2 hover:bg-blue-100 cursor-pointer text-sm border-b">${name}</div>`;
+            });
+
+            box.innerHTML = html;
+            box.style.display = 'block';
+        }
+
+        function selectSuggestedName(name) {
+            document.getElementById('newClientName').value = name;
+            document.getElementById('nameSuggestions').style.display = 'none';
+        }
 
         function switchTab(tab) {
             const activePanel = document.getElementById('activePanel');
@@ -397,12 +450,26 @@
 
         function renderActive() {
             const panel = document.getElementById('activePanel');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const searchTerm = normalizeText(document.getElementById('searchInput').value);
             panel.innerHTML = "";
             
-            const ativas = db.filter(n => n.status !== "Concluído" && n.status !== "Não Atendido" && n.clientName.toLowerCase().includes(searchTerm));
+            const ativas = db.filter(n => {
+                if (n.status === "Concluído" || n.status === "Não Atendido") return false;
+                if (!searchTerm) return true;
+                
+                const normName = normalizeText(n.clientName);
+                const normCpf = cleanNumbers(n.cpf);
+                const normTel = cleanNumbers(n.tel);
+                const normEmail = normalizeText(n.email);
+                const searchClean = cleanNumbers(document.getElementById('searchInput').value);
 
-            if(ativas.length === 0 && searchTerm !== "") {
+                return normName.includes(searchTerm) || 
+                       (searchClean && normCpf.includes(searchClean)) || 
+                       (searchClean && normTel.includes(searchClean)) || 
+                       normEmail.includes(searchTerm);
+            });
+
+            if(ativas.length === 0) {
                 panel.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">Nenhum cliente ativo encontrado.</p>`;
                 return;
             }
@@ -443,12 +510,26 @@
 
         function renderHistory() {
             const list = document.getElementById('historyList');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const searchTerm = normalizeText(document.getElementById('searchInput').value);
             list.innerHTML = "";
             
-            const inativas = db.filter(n => (n.status === "Concluído" || n.status === "Não Atendido") && n.clientName.toLowerCase().includes(searchTerm));
+            const inativas = db.filter(n => {
+                if (n.status !== "Concluído" && n.status !== "Não Atendido") return false;
+                if (!searchTerm) return true;
 
-            if(inativas.length === 0 && searchTerm !== "") {
+                const normName = normalizeText(n.clientName);
+                const normCpf = cleanNumbers(n.cpf);
+                const normTel = cleanNumbers(n.tel);
+                const normEmail = normalizeText(n.email);
+                const searchClean = cleanNumbers(document.getElementById('searchInput').value);
+
+                return normName.includes(searchTerm) || 
+                       (searchClean && normCpf.includes(searchClean)) || 
+                       (searchClean && normTel.includes(searchClean)) || 
+                       normEmail.includes(searchTerm);
+            });
+
+            if(inativas.length === 0) {
                 list.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum cliente inativo encontrado.</p>`;
                 return;
             }
@@ -476,33 +557,50 @@
             document.getElementById('duplicateResultArea').innerHTML = "";
             document.getElementById('stepFillData').style.display = 'none';
             document.getElementById('btnCancelStep1').style.display = 'flex';
+            document.getElementById('nameSuggestions').style.display = 'none';
             openModal('newNegotiationModal');
         }
 
         function checkDuplicate() {
-            const term = document.getElementById('duplicateSearchInput').value.trim().toLowerCase();
+            const rawTerm = document.getElementById('duplicateSearchInput').value.trim();
             const resultArea = document.getElementById('duplicateResultArea');
             
-            if(term.length < 3) {
-                resultArea.innerHTML = `<p class="text-red-600 text-sm">Digite ao menos 3 caracteres para buscar.</p>`;
+            if(rawTerm.length < 2) {
+                resultArea.innerHTML = `<p class="text-red-600 text-sm">Digite ao menos 2 caracteres para buscar.</p>`;
                 return;
             }
 
-            const found = db.find(n => n.clientName.toLowerCase().includes(term) || (n.cpf && n.cpf.includes(term)));
+            const termCleanNumbers = cleanNumbers(rawTerm);
+            const termNormText = normalizeText(rawTerm);
+
+            const found = db.find(n => {
+                const dbCpf = cleanNumbers(n.cpf);
+                const dbTel = cleanNumbers(n.tel);
+                const dbEmail = normalizeText(n.email);
+                const dbName = normalizeText(n.clientName);
+
+                return (termCleanNumbers && termCleanNumbers.length >= 3 && (dbCpf.includes(termCleanNumbers) || dbTel.includes(termCleanNumbers))) ||
+                       (dbEmail === termNormText) ||
+                       (dbName.includes(termNormText));
+            });
             
             if(found) {
                 resultArea.innerHTML = `
                     <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 p-3 rounded">
-                        <p class="font-bold mb-2"><i class="fas fa-exclamation-triangle"></i> Cliente já cadastrado!</p>
-                        <p class="text-sm mb-2">Nome: ${found.clientName} | Status: ${found.status}</p>
+                        <p class="font-bold mb-2"><i class="fas fa-exclamation-triangle"></i> Possível duplicidade encontrada!</p>
+                        <p class="text-sm mb-2">Nome: <strong>${found.clientName}</strong> | CPF: ${found.cpf || '-'} | Status: ${found.status}</p>
                         <button onclick="openDetailsFromSearch('${found.id}')" class="bg-yellow-600 text-white px-4 py-1 rounded text-sm hover:bg-yellow-700">Abrir Cadastro Existente</button>
                     </div>`;
                 document.getElementById('stepFillData').style.display = 'none';
                 document.getElementById('btnCancelStep1').style.display = 'flex';
             } else {
-                resultArea.innerHTML = `<p class="text-green-600 text-sm font-bold"><i class="fas fa-check"></i> Cliente não encontrado. Prossiga com o cadastro abaixo.</p>`;
-                if(/\d/.test(term)) document.getElementById('newCpf').value = term;
-                else document.getElementById('newClientName').value = document.getElementById('duplicateSearchInput').value;
+                resultArea.innerHTML = `<p class="text-green-600 text-sm font-bold"><i class="fas fa-check"></i> Nenhum cadastro conflitante encontrado. Preencha os dados abaixo:</p>`;
+                
+                if(termCleanNumbers.length === 11) document.getElementById('newCpf').value = rawTerm;
+                else if(rawTerm.includes('@')) document.getElementById('newEmail').value = rawTerm;
+                else if(termCleanNumbers.length >= 10) document.getElementById('newTel').value = rawTerm;
+                else document.getElementById('newClientName').value = rawTerm;
+
                 document.getElementById('stepFillData').style.display = 'block';
                 document.getElementById('btnCancelStep1').style.display = 'none';
             }
@@ -523,8 +621,30 @@
             const allowTakeover = document.getElementById('newAllowTakeover').value;
             const obs = document.getElementById('newObservation').value.trim();
 
-            if(!clientName || !tel || !email) { alert("Nome, Telefone e Email são obrigatórios!"); return; }
-            if((status === 'Retornar em data combinada' || status === 'Aguardando aceite') && !returnDate) { alert("Preencha a data para retorno!"); return; }
+            if(!clientName || !tel || !email) { 
+                alert("Nome, Telefone e E-mail são obrigatórios!"); 
+                return; 
+            }
+
+            if(cpf && !validateCpf(cpf)) {
+                alert("CPF inválido! O CPF deve conter exatamente 11 dígitos numéricos.");
+                return;
+            }
+
+            if(!validatePhone(tel)) {
+                alert("Telefone inválido! Informe o DDD seguido do número (8 dígitos para fixo ou 9 para celular). Ex: (11) 98888-8888");
+                return;
+            }
+
+            if(!validateEmail(email)) {
+                alert("E-mail inválido! O e-mail deve conter '@' e '.'");
+                return;
+            }
+
+            if((status === 'Retornar em data combinada' || status === 'Aguardando aceite') && !returnDate) { 
+                alert("Preencha a data para retorno!"); 
+                return; 
+            }
 
             const newNeg = {
                 id: generateId(),
@@ -626,10 +746,9 @@
             });
         }
 
-        // Solicita identificação do operador antes de qualquer ação
         function requestOperatorAction(actionType) {
             pendingActionType = actionType;
-            document.getElementById('actionOperatorSelect').value = operator; // Sugere o atual
+            document.getElementById('actionOperatorSelect').value = operator;
             openModal('operatorModal');
         }
 
@@ -642,7 +761,6 @@
             document.getElementById('operatorNameDisplay').innerText = operator;
             closeModal('operatorModal');
 
-            // Executa a ação pendente
             if(pendingActionType === 'updateStatus') executeUpdateStatus();
             else if(pendingActionType === 'registerMissedCall') executeRegisterMissedCall();
             else if(pendingActionType === 'addObservation') executeAddObservation();
@@ -676,7 +794,6 @@
         function executeRegisterMissedCall() {
             const neg = db.find(n => n.id === currentNegotiationId);
             neg.failedAttempts = (neg.failedAttempts || 0) + 1;
-            // Mantém o status atual e continua visível no painel ativo, acumulando falhas
 
             neg.timeline.push({
                 date: getTimestamp(), operator: operator,
