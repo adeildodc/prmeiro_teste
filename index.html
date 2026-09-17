@@ -9,27 +9,17 @@
     
     <!-- Bibliotecas do Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
 
-    <!-- Tela de Login -->
+    <!-- Tela de Identificação (Apenas pede o nome do operador) -->
     <div id="loginScreen" class="flex items-center justify-center min-h-screen bg-gray-800">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-96">
-            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Login no CRM</h2>
-            <div id="loginError" class="hidden bg-red-100 text-red-700 p-2 rounded mb-4 text-sm font-bold"></div>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700">E-mail</label>
-                    <input type="email" id="authEmail" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700">Senha</label>
-                    <input type="password" id="authPassword" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white font-bold p-2 rounded hover:bg-blue-700 transition">Entrar</button>
-            </div>
+        <div class="bg-white p-8 rounded-lg shadow-lg w-96 text-center">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Bem-vindo ao CRM</h2>
+            <p class="mb-4 text-sm text-gray-600">Identifique-se para começar</p>
+            <input type="text" id="operatorName" class="w-full border p-2 rounded mb-4 focus:ring-2 focus:ring-blue-500 outline-none text-center" placeholder="Ex: Adeildo">
+            <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700 transition">Entrar</button>
         </div>
     </div>
 
@@ -39,7 +29,7 @@
             <h1 class="text-xl font-bold"><i class="fas fa-handshake"></i> CRM Cobrança Ativa</h1>
             <div class="flex items-center space-x-4">
                 <span class="text-sm">Operador: <strong id="operatorNameDisplay"></strong></span>
-                <button onclick="handleLogout()" class="text-sm underline hover:text-gray-300">Sair</button>
+                <button onclick="logout()" class="text-sm underline hover:text-gray-300">Trocar</button>
             </div>
         </header>
 
@@ -209,7 +199,7 @@
         </div>
     </div>
 
-    <!-- Lógica e Conexão Firebase -->
+    <!-- Lógica e Conexão Firebase (Direta, sem Autenticação por e-mail) -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyC69ynCbWuJmE4JmstjPdpMSdWlSOU1hPM",
@@ -222,45 +212,38 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const database = firebase.database();
         
         let dbRef = null;
         let dbListener = null;
-        let currentUserEmail = null;
+        let operator = localStorage.getItem('crm_operator') || "";
         let currentNegotiationId = null;
         let db = []; 
 
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                currentUserEmail = user.email;
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('appScreen').style.display = 'block';
-                document.getElementById('operatorNameDisplay').innerText = user.email;
-                startDatabase();
-            } else {
-                currentUserEmail = null;
-                document.getElementById('loginScreen').style.display = 'flex';
-                document.getElementById('appScreen').style.display = 'none';
-                if (dbRef && dbListener) {
-                    dbRef.off('value', dbListener);
-                }
+        window.onload = function() {
+            if (operator) {
+                startApp(operator);
             }
-        });
+        };
 
-        function handleLogin() {
-            const email = document.getElementById('authEmail').value;
-            const pass = document.getElementById('authPassword').value;
-            const errBox = document.getElementById('loginError');
-            
-            auth.signInWithEmailAndPassword(email, pass).catch((error) => {
-                errBox.style.display = 'block';
-                errBox.innerText = "Erro ao fazer login: " + error.message;
-            });
+        function login() {
+            const name = document.getElementById('operatorName').value.trim();
+            if (!name) { alert("Digite seu nome!"); return; }
+            localStorage.setItem('crm_operator', name);
+            startApp(name);
         }
 
-        function handleLogout() {
-            auth.signOut();
+        function logout() {
+            localStorage.removeItem('crm_operator');
+            location.reload();
+        }
+
+        function startApp(name) {
+            operator = name;
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appScreen').style.display = 'block';
+            document.getElementById('operatorNameDisplay').innerText = operator;
+            startDatabase();
         }
 
         function startDatabase() {
@@ -282,8 +265,8 @@
                     }
                 }
             }, (error) => {
-                console.error("Erro de permissão no banco (Rules):", error);
-                alert("Sem permissão para ler o banco de dados. Verifique as rules do Firebase.");
+                console.error("Erro no banco de dados:", error);
+                alert("Erro ao conectar ao Realtime Database. Verifique se as regras do banco permitem leitura/escrita pública (ou ajuste conforme necessário).");
             });
         }
 
@@ -333,7 +316,7 @@
 
             ativas.forEach(n => {
                 const canTakeover = n.allowTakeover === "Sim";
-                const isMine = n.responsible === currentUserEmail;
+                const isMine = n.responsible === operator;
                 
                 let takeoverHTML = canTakeover ? `<div class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 mb-2 rounded border border-green-300 inline-block"><i class="fas fa-unlock"></i> Livre para assumir</div>` : '';
                 
@@ -395,7 +378,6 @@
         }
 
         function openNewModal() {
-            if(!currentUserEmail) return;
             document.getElementById('duplicateSearchInput').value = "";
             document.getElementById('duplicateResultArea').innerHTML = "";
             document.getElementById('stepFillData').style.display = 'none';
@@ -438,8 +420,6 @@
         }
 
         function createNegotiation() {
-            if(!currentUserEmail) return;
-
             const clientName = document.getElementById('newClientName').value.trim();
             const cpf = document.getElementById('newCpf').value.trim();
             const tel = document.getElementById('newTel').value.trim();
@@ -455,20 +435,20 @@
             const newNeg = {
                 id: generateId(),
                 clientName, cpf, tel, email,
-                responsible: currentUserEmail,
+                responsible: operator,
                 status, returnDate: returnDate || null,
                 allowTakeover, failedAttempts: 0,
                 createdAt: getTimestamp(), timeline: []
             };
 
             newNeg.timeline.push({
-                date: getTimestamp(), operator: currentUserEmail,
+                date: getTimestamp(), operator: operator,
                 action: "Criação do Cadastro", detail: `Criado com status: ${status}`
             });
 
             if(obs) {
                 newNeg.timeline.push({
-                    date: getTimestamp(), operator: currentUserEmail,
+                    date: getTimestamp(), operator: operator,
                     action: "Inclusão de observação", detail: obs
                 });
             }
@@ -490,13 +470,12 @@
         }
 
         function takeover(id) {
-            if(!currentUserEmail) return;
             if(confirm("Deseja assumir o contato deste cliente?")) {
                 const neg = db.find(n => n.id === id);
-                neg.responsible = currentUserEmail;
+                neg.responsible = operator;
                 neg.timeline.push({
-                    date: getTimestamp(), operator: currentUserEmail,
-                    action: "Alteração de responsável", detail: `Contato assumido por ${currentUserEmail}`
+                    date: getTimestamp(), operator: operator,
+                    action: "Alteração de responsável", detail: `Contato assumido por ${operator}`
                 });
                 saveData();
             }
@@ -553,7 +532,6 @@
         }
 
         function updateStatus() {
-            if(!currentUserEmail) return;
             const status = document.getElementById('actionStatus').value;
             const date = document.getElementById('actionReturnDate').value;
             const neg = db.find(n => n.id === currentNegotiationId);
@@ -568,7 +546,7 @@
             if(status === 'Retornar em data combinada') neg.returnDate = date;
 
             neg.timeline.push({
-                date: getTimestamp(), operator: currentUserEmail,
+                date: getTimestamp(), operator: operator,
                 action: status === "Concluído" ? "Conclusão da negociação" : "Alteração de status",
                 detail: status === 'Retornar em data combinada' ? `${status} para ${date}` : status
             });
@@ -577,14 +555,12 @@
         }
 
         function registerMissedCall() {
-            if(!currentUserEmail) return;
-            
             const neg = db.find(n => n.id === currentNegotiationId);
             neg.failedAttempts = (neg.failedAttempts || 0) + 1;
             neg.status = "Não Atendido";
 
             neg.timeline.push({
-                date: getTimestamp(), operator: currentUserEmail,
+                date: getTimestamp(), operator: operator,
                 action: "Tentativa Não Atendida",
                 detail: `Ligação não atendida. Total de tentativas perdidas: ${neg.failedAttempts}`
             });
@@ -595,14 +571,13 @@
         }
 
         function resumeNegotiation() {
-            if(!currentUserEmail) return;
-            if(confirm("Deseja retomar este contato? Ela voltará para o painel de ativos no seu nome.")) {
+            if(confirm("Deseja retomar este contato? Ele voltará para o painel de ativos no seu nome.")) {
                 const neg = db.find(n => n.id === currentNegotiationId);
                 neg.status = "Em negociação";
-                neg.responsible = currentUserEmail;
+                neg.responsible = operator;
                 
                 neg.timeline.push({
-                    date: getTimestamp(), operator: currentUserEmail,
+                    date: getTimestamp(), operator: operator,
                     action: "Retomada de negociação",
                     detail: "Cliente reativado. Status alterado para: Em negociação"
                 });
@@ -614,7 +589,6 @@
         }
 
         function addInteraction(type, inputId) {
-            if(!currentUserEmail) return;
             const text = document.getElementById(inputId).value.trim();
             if(!text) { alert("O campo não pode estar vazio!"); return; }
 
@@ -622,7 +596,7 @@
             if (!neg.timeline) neg.timeline = [];
             
             neg.timeline.push({
-                date: getTimestamp(), operator: currentUserEmail,
+                date: getTimestamp(), operator: operator,
                 action: type === 'Observação' ? "Inclusão de observação" : "Inclusão de proposta",
                 detail: text
             });
