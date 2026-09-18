@@ -308,7 +308,7 @@
         </div>
     </div>
 
-    <!-- Lógica e Conexão Firebase Otimizada -->
+    <!-- Lógica e Conexão Firebase Otimizada com Alertas de Prazo -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyC69ynCbWuJmE4JmstjPdpMSdWlSOU1hPM",
@@ -332,6 +332,13 @@
 
         let confirmCallbackFn = null;
         let cancelCallbackFn = null;
+
+        // Atualização automática a cada 30 segundos para disparar alertas de tempo real
+        setInterval(() => {
+            if(document.getElementById('appScreen').style.display !== 'none') {
+                renderPanels();
+            }
+        }, 30000);
 
         // Função utilitária para formatar a data americana (AAAA-MM-DD) para o padrão brasileiro (DD/MM/AAAA)
         function formatDateBR(dateStr) {
@@ -793,6 +800,8 @@
             }
 
             let htmlContent = "";
+            const now = new Date();
+
             ativas.forEach(n => {
                 const canTakeover = n.allowTakeover === "Sim" || n.responsible === "";
                 const isMine = n.responsible === operator;
@@ -801,10 +810,29 @@
 
                 let cardClass = "bg-white rounded-lg shadow border p-4 flex flex-col justify-between";
                 let alertBadge = "";
+                let isOverdue = false;
+                let isUrgent = false;
 
                 if (hasScheduledReturn) {
+                    const returnDateTime = new Date(`${n.returnDate}T${n.returnTime}`);
+                    const diffMs = returnDateTime - now;
+
+                    if (diffMs < 0) {
+                        isOverdue = true;
+                    } else if (diffMs <= 20 * 60 * 1000) {
+                        isUrgent = true;
+                    }
+                }
+
+                if (isOverdue) {
+                    cardClass = "bg-red-100 rounded-lg shadow-lg border-2 border-red-700 p-4 flex flex-col justify-between animate-pulse";
+                    alertBadge = `<div class="mb-2"><span class="bg-red-700 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-exclamation-triangle"></i> 🚨 RETORNO VENCIDO!</span></div>`;
+                } else if (isUrgent) {
+                    cardClass = "bg-orange-50 rounded-lg shadow-md border-l-4 border-l-orange-600 p-4 flex flex-col justify-between border-t border-r border-b border-orange-200";
+                    alertBadge = `<div class="mb-2"><span class="animate-pulse bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-bell"></i> ⏰ LIGAR EM MENOS DE 20 MIN</span></div>`;
+                } else if (hasScheduledReturn) {
                     cardClass = "bg-red-50 rounded-lg shadow-md border-l-4 border-l-red-600 p-4 flex flex-col justify-between border-t border-r border-b border-red-200";
-                    alertBadge = `<div class="mb-2"><span class="animate-pulse bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-bell"></i> ⏰ HORA DO RETORNO PROGRAMADO</span></div>`;
+                    alertBadge = `<div class="mb-2"><span class="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-calendar-check"></i> ⏰ HORA DO RETORNO PROGRAMADO</span></div>`;
                 } else if (isImportedUnassigned) {
                     cardClass = "bg-purple-50 rounded-lg shadow-md border-l-4 border-l-purple-600 p-4 flex flex-col justify-between border-t border-r border-b border-purple-200";
                     alertBadge = `<div class="mb-2"><span class="animate-pulse bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-exclamation-triangle"></i> 🚨 NOVO - NUNCA CONTACTADO</span></div>`;
@@ -821,16 +849,15 @@
                     btnAcaoHTML = `<button disabled class="w-full bg-gray-300 text-gray-500 py-2 rounded text-sm cursor-not-allowed">Restrito a ${n.responsible}</button>`;
                 }
 
-                // Formatando a data de AAAA-MM-DD para DD/MM/AAAA com destaque
                 let returnInfo = "";
                 if (hasScheduledReturn) {
                     const formattedDateBR = formatDateBR(n.returnDate);
-                    returnInfo = `<div class="bg-white p-2 rounded border border-red-300 my-2 text-center shadow-inner"><p class="text-xs text-red-600 font-bold uppercase"><i class="fas fa-calendar-alt"></i> Próximo Retorno:</p><p class="text-base text-red-700 font-extrabold">${formattedDateBR} às ${n.returnTime}</p></div>`;
+                    const timeColorClass = isOverdue ? 'text-red-800 font-extrabold' : (isUrgent ? 'text-orange-700 font-extrabold' : 'text-red-700 font-extrabold');
+                    returnInfo = `<div class="bg-white p-2 rounded border ${isOverdue ? 'border-red-600 bg-red-50' : 'border-red-300'} my-2 text-center shadow-inner"><p class="text-xs ${isOverdue ? 'text-red-800' : 'text-red-600'} font-bold uppercase"><i class="fas fa-calendar-alt"></i> Próximo Retorno:</p><p class="text-base ${timeColorClass}">${formattedDateBR} às ${n.returnTime}</p></div>`;
                 } else {
                     returnInfo = `<p class="text-xs text-blue-600 font-bold my-2"><i class="fas fa-clock"></i> Sem retorno agendado</p>`;
                 }
 
-                // Pegando a última observação e última proposta para mostrar direto no card
                 const lastObs = (n.observations && n.observations.length > 0) ? n.observations[n.observations.length - 1] : "Nenhuma observação registrada.";
                 const lastProp = (n.proposals && n.proposals.length > 0) ? n.proposals[n.proposals.length - 1] : "Nenhuma proposta registrada.";
 
