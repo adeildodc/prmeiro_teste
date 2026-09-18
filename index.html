@@ -182,7 +182,7 @@
                 <!-- Caixa de Mensagem Direta para o WhatsApp -->
                 <div class="bg-green-50 p-3 rounded border border-green-200 mb-3">
                     <label class="block text-xs font-bold text-green-800 mb-1"><i class="fab fa-whatsapp"></i> Mensagem para o WhatsApp</label>
-                    <textarea id="whatsappMessageInput" class="w-full border p-1.5 rounded text-sm mb-2 bg-white" rows="2" placeholder="Digite a mensagem para enviar no WhatsApp..."></textarea>
+                    <textarea id="whatsappMessageInput" class="w-full border p-1.5 rounded text-sm mb-2 bg-white" rows="3" placeholder="Digite a mensagem para enviar no WhatsApp..."></textarea>
                     <button onclick="sendWhatsApp()" class="w-full bg-green-600 text-white font-bold p-2 rounded text-sm shadow hover:bg-green-700 transition flex items-center justify-center gap-2">
                         <i class="fab fa-whatsapp text-lg"></i> Abrir WhatsApp com Mensagem
                     </button>
@@ -882,7 +882,9 @@
             document.getElementById('checkMissedCall').checked = false;
             document.getElementById('actionObservation').value = lastObs;
             document.getElementById('actionProposal').value = lastProp;
-            document.getElementById('whatsappMessageInput').value = `Olá ${neg.clientName}, tudo bem? Aqui é do setor de cobrança...`;
+            
+            // NOVA MENSAGEM PADRÃO DO WHATSAPP (Opção 1)
+            document.getElementById('whatsappMessageInput').value = `Olá, Sr(a). ${neg.clientName}. Tudo bem? Aqui é ${operator}, da Escola Instructiva. Gostaria muito de falar com o(a) senhor(a). Podemos conversar um minutinho?`;
 
             renderTimeline(neg);
             openModal('detailsModal');
