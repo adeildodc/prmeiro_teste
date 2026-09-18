@@ -75,7 +75,7 @@
         </div>
     </div>
 
-    <!-- MODAL: Nova Negociação (Sem exigência de data inicial) -->
+    <!-- MODAL: Nova Negociação -->
     <div id="newNegotiationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
             <h2 class="text-xl font-bold mb-4">Iniciar Novo Cadastro</h2>
@@ -148,7 +148,7 @@
                     Email: <span id="detailEmail"></span>
                 </div>
 
-                <!-- Formulário de Edição de Dados do Cliente (Oculto por padrão) -->
+                <!-- Formulário de Edição de Dados do Cliente -->
                 <div id="editClientBox" class="hidden bg-blue-50 p-3 rounded border border-blue-200 mb-3 space-y-2">
                     <h3 class="text-xs font-bold text-blue-800"><i class="fas fa-id-card"></i> Editar Cadastro do Devedor</h3>
                     <div>
@@ -194,6 +194,7 @@
                         <select id="actionStatus" onchange="toggleReturnDate('actionStatus', 'actionReturnDateDiv')" class="w-full border p-1.5 rounded mb-2 text-sm">
                             <option value="Retornar em data combinada">Retornar em data combinada</option>
                             <option value="Aguardando aceite">Aguardando aceite</option>
+                            <option value="Não Atendido">Não Atendido (Arquivar no Histórico)</option>
                             <option value="Concluído">Concluído</option>
                         </select>
                         <div id="actionReturnDateDiv" class="mt-2">
@@ -210,7 +211,7 @@
                             <span class="text-xs font-bold text-red-700 block"><i class="fas fa-phone-slash"></i> Registrar Não Atendimento</span>
                             <span class="text-[10px] text-gray-600">Incrementa +1 falha no contador</span>
                         </div>
-                        <input type="checkbox" id="checkMissedCall" class="w-4 h-4 text-red-600 rounded">
+                        <input type="checkbox" id="checkMissedCall" class="w-4 h-4 text-red-600 rounded cursor-pointer">
                     </div>
 
                     <div class="bg-gray-50 p-3 rounded border">
@@ -223,7 +224,6 @@
                         <textarea id="actionProposal" class="w-full border p-1.5 rounded text-sm" rows="2" placeholder="Digite se houver..."></textarea>
                     </div>
 
-                    <!-- Botão único de salvamento unificado -->
                     <button onclick="saveUnifiedUpdates()" class="w-full bg-blue-600 text-white font-bold p-2.5 rounded shadow hover:bg-blue-700 transition">
                         <i class="fas fa-save"></i> Salvar e Definir Próximo Contato
                     </button>
@@ -247,6 +247,37 @@
         </div>
     </div>
 
+    <!-- NOVOS MODAIS CUSTOMIZADOS DE AVISO E CONFIRMAÇÃO (COM LETRAS GRANDES) -->
+    
+    <!-- Modal de Alerta Customizado -->
+    <div id="customAlertModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-[100]">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl text-center transform transition-all">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
+                <i class="fas fa-exclamation-circle text-3xl text-yellow-600"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-3" id="customAlertTitle">Aviso</h3>
+            <p class="text-lg text-gray-700 mb-6 leading-relaxed" id="customAlertMessage">Mensagem do sistema aparecerá aqui.</p>
+            <button onclick="closeCustomAlert()" class="w-full px-6 py-3 bg-gray-800 text-white text-lg font-bold rounded hover:bg-gray-900 transition shadow">OK, Entendi</button>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação Customizado (Substitui o confirm) -->
+    <div id="customConfirmModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-[100]">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl text-center transform transition-all">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                <i class="fas fa-question-circle text-3xl text-blue-600"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-3" id="customConfirmTitle">Atenção</h3>
+            <p class="text-lg text-gray-700 mb-6 leading-relaxed whitespace-pre-line" id="customConfirmMessage">Mensagem da pergunta aqui.</p>
+            
+            <div class="flex flex-col gap-3 justify-center mt-2">
+                <button id="customConfirmBtnConfirm" class="w-full px-6 py-3 bg-blue-600 text-white text-lg font-bold rounded hover:bg-blue-700 transition shadow">Sim, Confirmar</button>
+                <button id="customConfirmBtnCancel" class="w-full px-6 py-3 bg-gray-200 text-gray-800 text-lg font-bold rounded hover:bg-gray-300 transition">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Lógica e Conexão Firebase -->
     <script>
         const firebaseConfig = {
@@ -268,6 +299,47 @@
         let currentNegotiationId = null;
         let db = []; 
         let operatorsList = [];
+
+        // SISTEMA DE MODAIS CUSTOMIZADOS (SUBSTITUTOS DO ALERT E CONFIRM NATIVOS)
+        let confirmCallbackFn = null;
+        let cancelCallbackFn = null;
+
+        function showCustomAlert(title, message) {
+            document.getElementById('customAlertTitle').innerText = title;
+            document.getElementById('customAlertMessage').innerText = message;
+            document.getElementById('customAlertModal').style.display = 'flex';
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('customAlertModal').style.display = 'none';
+        }
+
+        function showCustomConfirm(title, message, btnConfirmText, btnCancelText, onConfirm, onCancel) {
+            document.getElementById('customConfirmTitle').innerText = title;
+            document.getElementById('customConfirmMessage').innerText = message;
+            
+            const btnConfirm = document.getElementById('customConfirmBtnConfirm');
+            const btnCancel = document.getElementById('customConfirmBtnCancel');
+            
+            btnConfirm.innerText = btnConfirmText;
+            btnCancel.innerText = btnCancelText;
+            
+            confirmCallbackFn = onConfirm;
+            cancelCallbackFn = onCancel;
+            
+            document.getElementById('customConfirmModal').style.display = 'flex';
+        }
+
+        document.getElementById('customConfirmBtnConfirm').onclick = function() {
+            document.getElementById('customConfirmModal').style.display = 'none';
+            if (confirmCallbackFn) confirmCallbackFn();
+        };
+
+        document.getElementById('customConfirmBtnCancel').onclick = function() {
+            document.getElementById('customConfirmModal').style.display = 'none';
+            if (cancelCallbackFn) cancelCallbackFn();
+        };
+        // FIM DO SISTEMA DE MODAIS CUSTOMIZADOS
 
         window.onload = function() {
             startDatabase();
@@ -326,7 +398,7 @@
             }
 
             if (!name) { 
-                alert("Selecione ou digite o nome do operador!"); 
+                showCustomAlert("Identificação Necessária", "Selecione ou digite o nome do operador para entrar!"); 
                 return; 
             }
 
@@ -370,7 +442,7 @@
         }
 
         function saveData() { 
-            if(dbRef) dbRef.set(db).catch(err => alert("Erro ao salvar: " + err.message)); 
+            if(dbRef) dbRef.set(db).catch(err => showCustomAlert("Erro de Conexão", "Erro ao salvar no banco de dados: " + err.message)); 
         }
 
         function getTimestamp() { return new Date().toLocaleString('pt-BR'); }
@@ -423,22 +495,22 @@
             const newEmail = document.getElementById('editClientEmail').value.trim();
 
             if (!newName || !newTel || !newEmail) {
-                alert("Nome, Telefone e E-mail são obrigatórios!");
+                showCustomAlert("Campos Obrigatórios", "Nome, Telefone e E-mail são obrigatórios para atualizar!");
                 return;
             }
 
             if (newCpf && !validateCpf(newCpf)) {
-                alert("CPF inválido! Deve conter 11 dígitos.");
+                showCustomAlert("CPF Inválido", "O CPF digitado é inválido. Ele deve conter 11 dígitos numéricos.");
                 return;
             }
 
             if (!validatePhone(newTel)) {
-                alert("Telefone inválido!");
+                showCustomAlert("Telefone Inválido", "O número de telefone digitado é inválido. Coloque o DDD e o número.");
                 return;
             }
 
             if (!validateEmail(newEmail)) {
-                alert("E-mail inválido!");
+                showCustomAlert("E-mail Inválido", "O endereço de e-mail digitado é inválido.");
                 return;
             }
 
@@ -457,13 +529,13 @@
             saveData();
             toggleEditClient();
             openDetails(currentNegotiationId);
-            alert("Dados atualizados com sucesso!");
+            showCustomAlert("Sucesso", "Os dados do cliente foram atualizados com sucesso!");
         }
 
         function sendWhatsApp() {
             const neg = db.find(n => n.id === currentNegotiationId);
             if (!neg || !neg.tel) {
-                alert("Telefone do cliente não encontrado!");
+                showCustomAlert("Erro", "Telefone do cliente não encontrado!");
                 return;
             }
 
@@ -700,7 +772,6 @@
             openDetails(id);
         }
 
-        // Cadastro inicial sem obrigação de data: entra direto na tela de atendimento (Figura 2)
         function createNegotiation() {
             const clientName = document.getElementById('newClientName').value.trim();
             const cpf = document.getElementById('newCpf').value.trim();
@@ -710,22 +781,22 @@
             const obs = document.getElementById('newObservation').value.trim();
 
             if(!clientName || !tel || !email) { 
-                alert("Nome, Telefone e E-mail são obrigatórios!"); 
+                showCustomAlert("Campos Incompletos", "Os campos Nome, Telefone e E-mail são obrigatórios para realizar o cadastro!"); 
                 return; 
             }
 
             if(cpf && !validateCpf(cpf)) {
-                alert("CPF inválido! O CPF deve conter exatamente 11 dígitos numéricos.");
+                showCustomAlert("CPF Inválido", "O CPF digitado é inválido! Certifique-se de digitar os 11 números corretos.");
                 return;
             }
 
             if(!validatePhone(tel)) {
-                alert("Telefone inválido! Informe o DDD seguido do número.");
+                showCustomAlert("Telefone Inválido", "Telefone inválido! Informe o DDD seguido do número corretamente.");
                 return;
             }
 
             if(!validateEmail(email)) {
-                alert("E-mail inválido!");
+                showCustomAlert("E-mail Inválido", "O e-mail preenchido não é um formato válido. Verifique se possui '@' e '.com'");
                 return;
             }
 
@@ -757,8 +828,13 @@
             document.getElementById('newTel').value = ""; document.getElementById('newEmail').value = "";
             document.getElementById('newObservation').value = "";
             
-            // Abre diretamente a janela de detalhes do cliente recém-criado (Figura 2)
             openDetails(newId);
+        }
+
+        function toggleReturnDate(selectId, dateDivId) {
+            const val = document.getElementById(selectId).value;
+            const isConcluido = (val === 'Concluído' || val === 'Não Atendido');
+            document.getElementById(dateDivId).style.display = isConcluido ? 'none' : 'block';
         }
 
         function takeover(id) {
@@ -795,6 +871,7 @@
 
             if(!isInactive) {
                 document.getElementById('actionStatus').value = (neg.status === "Em Atendimento / Novo" || neg.status === "Em negociação") ? "Retornar em data combinada" : neg.status;
+                toggleReturnDate('actionStatus', 'actionReturnDateDiv');
                 if(neg.returnDate) document.getElementById('actionReturnDate').value = neg.returnDate;
                 if(neg.returnTime) document.getElementById('actionReturnTime').value = neg.returnTime;
             }
@@ -838,6 +915,7 @@
             });
         }
 
+        // SALVAMENTO USANDO OS NOVOS MODAIS CUSTOMIZADOS ASSÍNCRONOS
         function saveUnifiedUpdates() {
             const neg = db.find(n => n.id === currentNegotiationId);
             let newStatus = document.getElementById('actionStatus').value;
@@ -847,77 +925,110 @@
             const observationText = document.getElementById('actionObservation').value.trim();
             const proposalText = document.getElementById('actionProposal').value.trim();
 
-            if(newStatus !== "Concluído") {
+            let willArchive = (newStatus === "Concluído" || newStatus === "Não Atendido");
+
+            // 1. Checar se está concluindo
+            if(newStatus === "Concluído") {
+                showCustomConfirm(
+                    "Concluir Negociação",
+                    "Você tem certeza que deseja Concluir esta negociação?\n\nA ficha será movida para o histórico permanentemente.",
+                    "Sim, Concluir Ficha", 
+                    "Cancelar",
+                    function() { proceedSave(true, newStatus); },
+                    function() { /* não faz nada se cancelar */ }
+                );
+                return;
+            }
+
+            // 2. Checar a caixinha de Não Atendido (O pulo do gato!)
+            if(missedCallChecked && !willArchive) {
+                showCustomConfirm(
+                    "Registro de Não Atendido",
+                    "Você marcou a opção 'Registrar Não Atendimento'.\n\nO que você deseja fazer com esta ficha?",
+                    "Arquivar no Histórico", 
+                    "Manter nos Ativos",
+                    function() { // On Confirm (Arquivar)
+                        proceedSave(true, "Não Atendido");
+                    },
+                    function() { // On Cancel (Manter Ativo)
+                        if(!returnDate || !returnTime) {
+                            showCustomAlert("Falta de Dados", "Para manter o cliente no painel principal, é OBRIGATÓRIO preencher a Data e a Hora do próximo contato!");
+                            return;
+                        }
+                        proceedSave(false, newStatus);
+                    }
+                );
+                return;
+            }
+
+            // 3. Validação normal (Se não vai pro histórico, precisa da data)
+            if(!willArchive) {
                 if(!returnDate || !returnTime) {
-                    alert("Para salvar, é obrigatório definir a Data e a Hora do próximo contato!");
+                    showCustomAlert("Falta de Dados", "Para salvar, é obrigatório definir a Data e a Hora do próximo contato!");
                     return;
                 }
             }
 
-            if(newStatus === "Concluído" && !confirm("Deseja concluir a negociação? Ela será enviada ao histórico.")) {
-                return;
-            }
+            // Se passou direto pelas validações sem precisar confirmar
+            proceedSave(willArchive, newStatus);
 
-            let summaryDetails = [];
-            let actionTitle = "Atualização de Negociação";
+            // Função interna que executa o salvamento de fato
+            function proceedSave(finalArchive, finalStatus) {
+                let summaryDetails = [];
+                let actionTitle = "Atualização de Negociação";
 
-            if(missedCallChecked) {
-                neg.failedAttempts = (neg.failedAttempts || 0) + 1;
-                summaryDetails.push(`Tentativa não atendida (Total de falhas: ${neg.failedAttempts})`);
-
-                const keepActive = confirm("Não Atendido registrado.\n\nClique em [OK] para MANTER o cliente ativo.\nClique em [CANCELAR] para ARQUIVAR (enviar para o histórico como Não Atendido).");
-                if(!keepActive) {
-                    newStatus = "Não Atendido";
-                    actionTitle = "Não Atendido (Arquivado)";
+                if(missedCallChecked) {
+                    neg.failedAttempts = (neg.failedAttempts || 0) + 1;
+                    summaryDetails.push(`Tentativa não atendida (Total de falhas: ${neg.failedAttempts})`);
                 }
-            }
 
-            if(newStatus === "Concluído" || newStatus === "Não Atendido") {
-                neg.status = newStatus;
-                neg.returnDate = null;
-                neg.returnTime = null;
-                summaryDetails.push(`Status alterado para: ${newStatus}`);
-                actionTitle = "Encerramento de Negociação";
-            } else {
-                neg.status = newStatus;
-                neg.returnDate = returnDate;
-                neg.returnTime = returnTime;
-                summaryDetails.push(`Status: ${newStatus} para ${returnDate} às ${returnTime}`);
-            }
+                if(finalArchive) {
+                    neg.status = finalStatus;
+                    neg.returnDate = null;
+                    neg.returnTime = null;
+                    summaryDetails.push(`Status alterado para: ${finalStatus}`);
+                    actionTitle = (finalStatus === "Não Atendido") ? "Não Atendido (Arquivado)" : "Encerramento de Negociação";
+                } else {
+                    neg.status = finalStatus;
+                    neg.returnDate = returnDate;
+                    neg.returnTime = returnTime;
+                    summaryDetails.push(`Status: ${finalStatus} para ${returnDate} às ${returnTime}`);
+                }
 
-            const lastObs = (neg.observations && neg.observations.length > 0) ? neg.observations[neg.observations.length - 1] : "";
-            if(observationText && observationText !== lastObs) {
-                if (!neg.observations) neg.observations = [];
-                neg.observations.push(observationText);
-                summaryDetails.push(`Obs: ${observationText}`);
-            }
+                const lastObs = (neg.observations && neg.observations.length > 0) ? neg.observations[neg.observations.length - 1] : "";
+                if(observationText && observationText !== lastObs) {
+                    if (!neg.observations) neg.observations = [];
+                    neg.observations.push(observationText);
+                    summaryDetails.push(`Obs: ${observationText}`);
+                }
 
-            const lastProp = (neg.proposals && neg.proposals.length > 0) ? neg.proposals[neg.proposals.length - 1] : "";
-            if(proposalText && proposalText !== lastProp) {
-                if (!neg.proposals) neg.proposals = [];
-                neg.proposals.push(proposalText);
-                summaryDetails.push(`Proposta: ${proposalText}`);
-            }
+                const lastProp = (neg.proposals && neg.proposals.length > 0) ? neg.proposals[neg.proposals.length - 1] : "";
+                if(proposalText && proposalText !== lastProp) {
+                    if (!neg.proposals) neg.proposals = [];
+                    neg.proposals.push(proposalText);
+                    summaryDetails.push(`Proposta: ${proposalText}`);
+                }
 
-            if(summaryDetails.length === 0) {
-                alert("Nenhuma alteração foi feita para salvar.");
-                return;
-            }
+                if(summaryDetails.length === 0) {
+                    showCustomAlert("Sem Alterações", "Você não fez nenhuma alteração na ficha para poder salvar.");
+                    return;
+                }
 
-            neg.timeline.push({
-                date: getTimestamp(), 
-                operator: operator,
-                action: actionTitle,
-                detail: summaryDetails.join(" | ")
-            });
+                neg.timeline.push({
+                    date: getTimestamp(), 
+                    operator: operator,
+                    action: actionTitle,
+                    detail: summaryDetails.join(" | ")
+                });
 
-            saveData();
-            
-            if(newStatus === "Concluído" || newStatus === "Não Atendido") {
-                closeModal('detailsModal');
-                switchTab('active');
-            } else {
-                openDetails(currentNegotiationId);
+                saveData();
+                
+                if(finalArchive) {
+                    closeModal('detailsModal');
+                    switchTab('active');
+                } else {
+                    openDetails(currentNegotiationId);
+                }
             }
         }
 
@@ -928,46 +1039,60 @@
                 const screenDate = document.getElementById('actionReturnDate').value;
                 const screenTime = document.getElementById('actionReturnTime').value;
 
-                if (currentStatus !== "Concluído" && (!screenDate || !screenTime)) {
-                    const confirmClose = confirm("Atenção: Você está fechando a tela sem definir uma data/hora de retorno ou aceite.\n\nClique em [OK] para arquivar/enviar esta ficha para o histórico.\nClique em [CANCELAR] para voltar e definir o próximo contato.");
-                    if (confirmClose) {
-                        neg.status = "Não Atendido";
-                        neg.returnDate = null;
-                        neg.returnTime = null;
-                        neg.timeline.push({
-                            date: getTimestamp(),
-                            operator: operator,
-                            action: "Fechamento sem Agendamento",
-                            detail: "Janela fechada sem definir novo contato. Ficha enviada ao histórico."
-                        });
-                        saveData();
-                        closeModal('detailsModal');
-                        switchTab('active');
-                        return;
-                    } else {
-                        return;
-                    }
+                if (currentStatus !== "Concluído" && currentStatus !== "Não Atendido" && (!screenDate || !screenTime)) {
+                    
+                    showCustomConfirm(
+                        "Ficha Aberta e Incompleta",
+                        "Você está fechando a tela sem agendar a Data e Hora para o próximo retorno.\n\nDeseja enviar esta ficha para o histórico de Inativos (Não Atendidos)?",
+                        "Sim, Enviar para Histórico",
+                        "Não, Voltar para Ficha",
+                        function() { // On Confirm
+                            neg.status = "Não Atendido";
+                            neg.returnDate = null;
+                            neg.returnTime = null;
+                            neg.timeline.push({
+                                date: getTimestamp(),
+                                operator: operator,
+                                action: "Fechamento sem Agendamento",
+                                detail: "Janela fechada sem definir novo contato. Ficha enviada ao histórico."
+                            });
+                            saveData();
+                            closeModal('detailsModal');
+                            switchTab('active');
+                        },
+                        function() { // On Cancel
+                            // Apenas retorna, o modal customizado já some automaticamente
+                        }
+                    );
+                    return;
                 }
             }
             closeModal('detailsModal');
         }
 
         function executeResumeNegotiation() {
-            if(confirm("Deseja retomar este contato? Ele voltará para o painel de ativos no seu nome.")) {
-                const neg = db.find(n => n.id === currentNegotiationId);
-                neg.status = "Retornar em data combinada";
-                neg.responsible = operator;
-                
-                neg.timeline.push({
-                    date: getTimestamp(), operator: operator,
-                    action: "Retomada de negociação",
-                    detail: "Cliente reativado."
-                });
-                saveData();
-                closeModal('detailsModal');
-                document.getElementById('searchInput').value = "";
-                switchTab('active');
-            }
+            showCustomConfirm(
+                "Retomar Negociação",
+                "Tem certeza que deseja retomar este contato?\n\nEle voltará automaticamente para o Painel de Ativos no seu nome.",
+                "Sim, Retomar",
+                "Cancelar",
+                function() {
+                    const neg = db.find(n => n.id === currentNegotiationId);
+                    neg.status = "Retornar em data combinada";
+                    neg.responsible = operator;
+                    
+                    neg.timeline.push({
+                        date: getTimestamp(), operator: operator,
+                        action: "Retomada de negociação",
+                        detail: "Cliente reativado no sistema."
+                    });
+                    saveData();
+                    closeModal('detailsModal');
+                    document.getElementById('searchInput').value = "";
+                    switchTab('active');
+                },
+                function() {}
+            );
         }
 
         function exportCSV() {
