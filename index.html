@@ -1243,7 +1243,7 @@
         function executeResumeNegotiation() {
             showCustomConfirm(
                 "Retomar Negociação",
-                "Tem certeza que deseja retomar este contato?\n\nEle voltará automaticamente para o Painel de Ativos no seu nome.",
+                "Tem certeza que deseja retomar este contato?\n\nEle voltará para os ativos e você poderá agendar a nova data de retorno imediatamente.",
                 "Sim, Retomar",
                 "Cancelar",
                 function() {
@@ -1257,9 +1257,17 @@
                         detail: "Cliente reativado no sistema."
                     });
                     saveData();
-                    closeModal('detailsModal');
-                    document.getElementById('searchInput').value = "";
+                    
+                    // Mudar visualmente para aba de ativos no fundo, mas manter o modal aberto e pronto para edição
                     switchTab('active');
+                    document.getElementById('actionForms').style.display = 'block';
+                    document.getElementById('resumeArea').style.display = 'none';
+                    document.getElementById('detailStatusBadge').innerText = neg.status;
+                    document.getElementById('detailResponsible').innerText = neg.responsible;
+                    document.getElementById('actionStatus').value = "Retornar em data combinada";
+                    toggleReturnDate('actionStatus', 'actionReturnDateDiv');
+                    
+                    renderTimeline(neg);
                 },
                 function() {}
             );
