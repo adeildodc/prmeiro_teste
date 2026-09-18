@@ -227,7 +227,7 @@
                         <select id="actionStatus" onchange="toggleReturnDate('actionStatus', 'actionReturnDateDiv')" class="w-full border p-1.5 rounded mb-2 text-sm">
                             <option value="Retornar em data combinada">Retornar em data combinada</option>
                             <option value="Aguardando aceite">Aguardando aceite</option>
-                            <option value="Aguardando Contato Futuro">Aguardando Contato Futuro</option>
+                            <option value="Ligar Novamente">Ligar Novamente</option>
                             <option value="Não Atendido">Não Atendido (Arquivar no Histórico)</option>
                             <option value="Concluído">Concluído</option>
                         </select>
@@ -751,7 +751,7 @@
             const searchTerm = normalizeText(document.getElementById('searchInput').value);
             
             const ativas = db.filter(n => {
-                if (n.status === "Concluído" || n.status === "Não Atendido" || n.status === "Aguardando Contato Futuro") return false;
+                if (n.status === "Concluído" || n.status === "Não Atendido" || n.status === "Ligar Novamente") return false;
                 if (!searchTerm) return true;
                 
                 const normName = normalizeText(n.clientName);
@@ -864,7 +864,7 @@
             const searchTerm = normalizeText(document.getElementById('searchInput').value);
             
             const inativas = db.filter(n => {
-                if (n.status !== "Concluído" && n.status !== "Não Atendido" && n.status !== "Aguardando Contato Futuro") return false;
+                if (n.status !== "Concluído" && n.status !== "Não Atendido" && n.status !== "Ligar Novamente") return false;
                 if (!searchTerm) return true;
 
                 const normName = normalizeText(n.clientName);
@@ -888,7 +888,7 @@
             inativas.forEach(n => {
                 let badgeClass = "bg-gray-200 text-gray-800 border-gray-400";
                 if (n.status === "Não Atendido") badgeClass = "bg-red-100 text-red-800 border-red-300";
-                if (n.status === "Aguardando Contato Futuro") badgeClass = "bg-orange-100 text-orange-800 border-orange-300";
+                if (n.status === "Ligar Novamente") badgeClass = "bg-orange-100 text-orange-800 border-orange-300";
 
                 htmlContent += `
                     <div class="border p-4 rounded flex flex-col md:flex-row justify-between items-center bg-gray-50 hover:bg-gray-100 gap-4">
@@ -1027,7 +1027,7 @@
 
         function toggleReturnDate(selectId, dateDivId) {
             const val = document.getElementById(selectId).value;
-            const isConcluido = (val === 'Concluído' || val === 'Não Atendido' || val === 'Aguardando Contato Futuro');
+            const isConcluido = (val === 'Concluído' || val === 'Não Atendido' || val === 'Ligar Novamente');
             document.getElementById(dateDivId).style.display = isConcluido ? 'none' : 'block';
         }
 
@@ -1063,7 +1063,7 @@
             
             document.getElementById('editClientBox').classList.add('hidden');
 
-            const isInactive = (neg.status === "Concluído" || neg.status === "Não Atendido" || neg.status === "Aguardando Contato Futuro");
+            const isInactive = (neg.status === "Concluído" || neg.status === "Não Atendido" || neg.status === "Ligar Novamente");
             document.getElementById('actionForms').style.display = isInactive ? 'none' : 'block';
             document.getElementById('resumeArea').style.display = isInactive ? 'block' : 'none';
 
@@ -1125,7 +1125,7 @@
             const observationText = document.getElementById('actionObservation').value.trim();
             const proposalText = document.getElementById('actionProposal').value.trim();
 
-            let willArchive = (newStatus === "Concluído" || newStatus === "Não Atendido" || newStatus === "Aguardando Contato Futuro");
+            let willArchive = (newStatus === "Concluído" || newStatus === "Não Atendido" || newStatus === "Ligar Novamente");
 
             if(newStatus === "Concluído") {
                 showCustomConfirm(
@@ -1182,8 +1182,8 @@
                     neg.returnDate = null;
                     neg.returnTime = null;
                     summaryDetails.push(`Status alterado para: ${finalStatus}`);
-                    if (finalStatus === "Aguardando Contato Futuro") {
-                        actionTitle = "Aguardando Contato Futuro";
+                    if (finalStatus === "Ligar Novamente") {
+                        actionTitle = "Ligar Novamente";
                     } else {
                         actionTitle = (finalStatus === "Não Atendido") ? "Não Atendido (Arquivado)" : "Encerramento de Negociação";
                     }
@@ -1238,7 +1238,7 @@
                 const screenDate = document.getElementById('actionReturnDate').value;
                 const screenTime = document.getElementById('actionReturnTime').value;
 
-                if (currentStatus !== "Concluído" && currentStatus !== "Não Atendido" && currentStatus !== "Aguardando Contato Futuro" && (!screenDate || !screenTime)) {
+                if (currentStatus !== "Concluído" && currentStatus !== "Não Atendido" && currentStatus !== "Ligar Novamente" && (!screenDate || !screenTime)) {
                     
                     showCustomConfirm(
                         "Ficha Aberta e Incompleta",
