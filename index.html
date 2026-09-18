@@ -333,6 +333,16 @@
         let confirmCallbackFn = null;
         let cancelCallbackFn = null;
 
+        // Função utilitária para formatar a data americana (AAAA-MM-DD) para o padrão brasileiro (DD/MM/AAAA)
+        function formatDateBR(dateStr) {
+            if (!dateStr) return "";
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateStr;
+        }
+
         function showCustomAlert(title, message) {
             document.getElementById('customAlertTitle').innerText = title;
             document.getElementById('customAlertMessage').innerText = message;
@@ -811,7 +821,18 @@
                     btnAcaoHTML = `<button disabled class="w-full bg-gray-300 text-gray-500 py-2 rounded text-sm cursor-not-allowed">Restrito a ${n.responsible}</button>`;
                 }
 
-                let returnInfo = hasScheduledReturn ? `<p class="text-sm text-red-700 font-bold"><i class="fas fa-calendar-alt"></i> Retorno: ${n.returnDate} às ${n.returnTime}</p>` : `<p class="text-sm text-blue-600 font-bold"><i class="fas fa-clock"></i> Sem retorno agendado</p>`;
+                // Formatando a data de AAAA-MM-DD para DD/MM/AAAA com destaque
+                let returnInfo = "";
+                if (hasScheduledReturn) {
+                    const formattedDateBR = formatDateBR(n.returnDate);
+                    returnInfo = `<div class="bg-white p-2 rounded border border-red-300 my-2 text-center shadow-inner"><p class="text-xs text-red-600 font-bold uppercase"><i class="fas fa-calendar-alt"></i> Próximo Retorno:</p><p class="text-base text-red-700 font-extrabold">${formattedDateBR} às ${n.returnTime}</p></div>`;
+                } else {
+                    returnInfo = `<p class="text-xs text-blue-600 font-bold my-2"><i class="fas fa-clock"></i> Sem retorno agendado</p>`;
+                }
+
+                // Pegando a última observação e última proposta para mostrar direto no card
+                const lastObs = (n.observations && n.observations.length > 0) ? n.observations[n.observations.length - 1] : "Nenhuma observação registrada.";
+                const lastProp = (n.proposals && n.proposals.length > 0) ? n.proposals[n.proposals.length - 1] : "Nenhuma proposta registrada.";
 
                 htmlContent += `
                     <div class="${cardClass}">
@@ -820,10 +841,16 @@
                             <h3 class="font-bold text-lg leading-tight mb-1">${n.clientName}</h3>
                             ${takeoverHTML}
                             <div class="text-xs text-gray-600 mb-2 border-b pb-2 border-gray-200">CPF: ${n.cpf || '-'} | Tel: ${n.tel || '-'}</div>
-                            <p class="text-sm mb-1"><strong>Status:</strong> ${n.status}</p>
-                            <p class="text-sm mb-1"><strong>Resp:</strong> ${n.responsible || '<span class="text-purple-600 font-bold">Aguardando Operador</span>'}</p>
-                            <p class="text-sm mb-1"><strong>Falhas:</strong> ${n.failedAttempts || 0}</p>
+                            <p class="text-xs mb-1"><strong>Status:</strong> <span class="text-blue-700 font-bold">${n.status}</span></p>
+                            <p class="text-xs mb-1"><strong>Resp:</strong> ${n.responsible || '<span class="text-purple-600 font-bold">Aguardando Operador</span>'}</p>
+                            <p class="text-xs mb-1"><strong>Falhas:</strong> ${n.failedAttempts || 0}</p>
+                            
                             ${returnInfo}
+
+                            <div class="bg-gray-50 p-2 rounded text-[11px] text-gray-700 mt-2 space-y-1 border">
+                                <p><strong>Obs:</strong> ${lastObs}</p>
+                                <p><strong>Proposta:</strong> ${lastProp}</p>
+                            </div>
                         </div>
                         <div class="mt-4">${btnAcaoHTML}</div>
                     </div>
@@ -1164,7 +1191,7 @@
                     neg.status = finalStatus;
                     neg.returnDate = returnDate;
                     neg.returnTime = returnTime;
-                    summaryDetails.push(`Status: ${finalStatus} para ${returnDate} às ${returnTime}`);
+                    summaryDetails.push(`Status: ${finalStatus} para ${formatDateBR(returnDate)} às ${returnTime}`);
                 }
 
                 const lastObs = (neg.observations && neg.observations.length > 0) ? neg.observations[neg.observations.length - 1] : "";
@@ -1258,7 +1285,6 @@
                     });
                     saveData();
                     
-                    // Mudar visualmente para aba de ativos no fundo, mas manter o modal aberto e pronto para edição
                     switchTab('active');
                     document.getElementById('actionForms').style.display = 'block';
                     document.getElementById('resumeArea').style.display = 'none';
