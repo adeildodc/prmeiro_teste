@@ -225,7 +225,7 @@
                     <div class="bg-gray-50 p-3 rounded border">
                         <label class="block text-xs font-bold mb-1">Mudar Status (Obrigatório definir futuro)</label>
                         <select id="actionStatus" onchange="toggleReturnDate('actionStatus', 'actionReturnDateDiv')" class="w-full border p-1.5 rounded mb-2 text-sm">
-                            <option value="Retornar em data combinada">Retornar em data combinada</option>
+                            <option value="Retornar Dia">Retornar Dia</option>
                             <option value="Aguardando aceite">Aguardando aceite</option>
                             <option value="Ligar Novamente">Ligar Novamente</option>
                             <option value="Não Atendido">Não Atendido (Arquivar no Histórico)</option>
@@ -1068,7 +1068,7 @@
             document.getElementById('resumeArea').style.display = isInactive ? 'block' : 'none';
 
             if(!isInactive) {
-                document.getElementById('actionStatus').value = (neg.status === "Em Atendimento / Novo" || neg.status === "Em negociação") ? "Retornar em data combinada" : neg.status;
+                document.getElementById('actionStatus').value = (neg.status === "Em Atendimento / Novo" || neg.status === "Em negociação") ? "Retornar Dia" : neg.status;
                 toggleReturnDate('actionStatus', 'actionReturnDateDiv');
                 if(neg.returnDate) document.getElementById('actionReturnDate').value = neg.returnDate;
                 if(neg.returnTime) document.getElementById('actionReturnTime').value = neg.returnTime;
@@ -1275,7 +1275,7 @@
                 "Cancelar",
                 function() {
                     const neg = db.find(n => n.id === currentNegotiationId);
-                    neg.status = "Retornar em data combinada";
+                    neg.status = "Retornar Dia";
                     neg.responsible = operator;
                     
                     neg.timeline.push({
@@ -1290,7 +1290,7 @@
                     document.getElementById('resumeArea').style.display = 'none';
                     document.getElementById('detailStatusBadge').innerText = neg.status;
                     document.getElementById('detailResponsible').innerText = neg.responsible;
-                    document.getElementById('actionStatus').value = "Retornar em data combinada";
+                    document.getElementById('actionStatus').value = "Retornar Dia";
                     toggleReturnDate('actionStatus', 'actionReturnDateDiv');
                     
                     renderTimeline(neg);
