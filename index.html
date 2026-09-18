@@ -151,10 +151,40 @@
     <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 w-full max-w-5xl shadow-xl flex gap-4 h-[90vh]">
             <div class="w-1/3 border-r pr-4 overflow-y-auto">
-                <h2 class="text-xl font-bold mb-1" id="detailClientName">Nome do Cliente</h2>
+                <div class="flex justify-between items-start mb-1">
+                    <h2 class="text-xl font-bold" id="detailClientName">Nome do Cliente</h2>
+                    <button onclick="toggleEditClient()" class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300 transition" title="Editar dados cadastrais">
+                        <i class="fas fa-edit"></i> Editar Dados
+                    </button>
+                </div>
                 <div class="text-xs text-gray-500 mb-2">
                     CPF: <span id="detailCpf"></span> | Tel: <span id="detailTel"></span><br>
                     Email: <span id="detailEmail"></span>
+                </div>
+
+                <!-- Formulário de Edição de Dados do Cliente (Oculto por padrão) -->
+                <div id="editClientBox" class="hidden bg-blue-50 p-3 rounded border border-blue-200 mb-3 space-y-2">
+                    <h3 class="text-xs font-bold text-blue-800"><i class="fas id-card"></i> Editar Cadastro do Devedor</h3>
+                    <div>
+                        <label class="block text-[10px] font-bold">Nome:</label>
+                        <input type="text" id="editClientName" class="w-full border p-1 rounded text-xs bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold">CPF:</label>
+                        <input type="text" id="editClientCpf" class="w-full border p-1 rounded text-xs bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold">Telefone:</label>
+                        <input type="text" id="editClientTel" class="w-full border p-1 rounded text-xs bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold">E-mail:</label>
+                        <input type="email" id="editClientEmail" class="w-full border p-1 rounded text-xs bg-white">
+                    </div>
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="saveClientEdits()" class="bg-blue-600 text-white text-xs px-3 py-1 rounded font-bold hover:bg-blue-700">Salvar Alterações</button>
+                        <button onclick="toggleEditClient()" class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded">Cancelar</button>
+                    </div>
                 </div>
                 
                 <div class="mb-4 text-sm bg-gray-100 p-2 rounded">
@@ -339,6 +369,10 @@
                     const neg = db.find(n => n.id === currentNegotiationId);
                     if (neg) {
                         renderTimeline(neg);
+                        document.getElementById('detailClientName').innerText = neg.clientName;
+                        document.getElementById('detailCpf').innerText = neg.cpf || 'Não informado';
+                        document.getElementById('detailTel').innerText = neg.tel || 'Não informado';
+                        document.getElementById('detailEmail').innerText = neg.email || 'Não informado';
                         document.getElementById('detailStatusBadge').innerText = neg.status;
                         document.getElementById('detailResponsible').innerText = neg.responsible;
                         document.getElementById('detailFailedAttempts').innerText = neg.failedAttempts || 0;
@@ -380,7 +414,67 @@
             return email.includes('@') && email.includes('.');
         }
 
-        // Função para Disparar o WhatsApp com o texto digitado na caixa
+        // Funções de Edição do Cliente
+        function toggleEditClient() {
+            const box = document.getElementById('editClientBox');
+            const isHidden = box.classList.contains('hidden');
+            if (isHidden) {
+                const neg = db.find(n => n.id === currentNegotiationId);
+                document.getElementById('editClientName').value = neg.clientName || '';
+                document.getElementById('editClientCpf').value = neg.cpf || '';
+                document.getElementById('editClientTel').value = neg.tel || '';
+                document.getElementById('editClientEmail').value = neg.email || '';
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
+        function saveClientEdits() {
+            const neg = db.find(n => n.id === currentNegotiationId);
+            const newName = document.getElementById('editClientName').value.trim();
+            const newCpf = document.getElementById('editClientCpf').value.trim();
+            const newTel = document.getElementById('editClientTel').value.trim();
+            const newEmail = document.getElementById('editClientEmail').value.trim();
+
+            if (!newName || !newTel || !newEmail) {
+                alert("Nome, Telefone e E-mail são obrigatórios!");
+                return;
+            }
+
+            if (newCpf && !validateCpf(newCpf)) {
+                alert("CPF inválido! Deve conter 11 dígitos.");
+                return;
+            }
+
+            if (!validatePhone(newTel)) {
+                alert("Telefone inválido!");
+                return;
+            }
+
+            if (!validateEmail(newEmail)) {
+                alert("E-mail inválido!");
+                return;
+            }
+
+            neg.clientName = newName;
+            neg.cpf = newCpf;
+            neg.tel = newTel;
+            neg.email = newEmail;
+
+            neg.timeline.push({
+                date: getTimestamp(),
+                operator: operator,
+                action: "Edição de Dados",
+                detail: `Dados cadastrais atualizados por ${operator}`
+            });
+
+            saveData();
+            toggleEditClient();
+            openDetails(currentNegotiationId);
+            alert("Dados atualizados com sucesso!");
+        }
+
         function sendWhatsApp() {
             const neg = db.find(n => n.id === currentNegotiationId);
             if (!neg || !neg.tel) {
@@ -720,6 +814,8 @@
             document.getElementById('detailStatusBadge').innerText = neg.status;
             document.getElementById('detailFailedAttempts').innerText = neg.failedAttempts || 0;
             
+            document.getElementById('editClientBox').classList.add('hidden');
+
             const isInactive = (neg.status === "Concluído" || neg.status === "Não Atendido");
             document.getElementById('actionForms').style.display = isInactive ? 'none' : 'block';
             document.getElementById('resumeArea').style.display = isInactive ? 'block' : 'none';
@@ -756,6 +852,7 @@
                 if(t.action.includes("Retomada")) icon = "fa-redo text-yellow-600";
                 if(t.action.includes("Não Atendido")) icon = "fa-phone-slash text-red-500";
                 if(t.action.includes("Assumiu")) icon = "fa-user-check text-green-600";
+                if(t.action.includes("Edição")) icon = "fa-user-edit text-blue-600";
                 if(t.action.includes("responsável")) icon = "fa-user-exchange text-purple-500";
 
                 container.innerHTML += `
