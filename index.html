@@ -227,6 +227,7 @@
                         <select id="actionStatus" onchange="toggleReturnDate('actionStatus', 'actionReturnDateDiv')" class="w-full border p-1.5 rounded mb-2 text-sm">
                             <option value="Retornar em data combinada">Retornar em data combinada</option>
                             <option value="Aguardando aceite">Aguardando aceite</option>
+                            <option value="Aguardando Contato Futuro">Aguardando Contato Futuro</option>
                             <option value="Não Atendido">Não Atendido (Arquivar no Histórico)</option>
                             <option value="Concluído">Concluído</option>
                         </select>
@@ -741,7 +742,7 @@
             panel.innerHTML = "";
             
             const ativas = db.filter(n => {
-                if (n.status === "Concluído" || n.status === "Não Atendido") return false;
+                if (n.status === "Concluído" || n.status === "Não Atendido" || n.status === "Aguardando Contato Futuro") return false;
                 if (!searchTerm) return true;
                 
                 const normName = normalizeText(n.clientName);
@@ -756,23 +757,19 @@
                        normEmail.includes(searchTerm);
             });
 
-            // ORDENAÇÃO INTELIGENTE POR CRONOLOGIA DE RETORNO E PRIORIDADE
             ativas.sort((a, b) => {
                 const hasReturnA = (a.returnDate && a.returnTime);
                 const hasReturnB = (b.returnDate && b.returnTime);
 
-                // 1. Quem tem data de retorno programada vem SEMPRE antes dos demais
                 if (hasReturnA && !hasReturnB) return -1;
                 if (!hasReturnA && hasReturnB) return 1;
 
-                // 2. Se ambos têm retorno programado, ordena pelo mais próximo cronologicamente (Data + Hora)
                 if (hasReturnA && hasReturnB) {
                     const dateTimeA = new Date(`${a.returnDate}T${a.returnTime || '00:00'}`);
                     const dateTimeB = new Date(`${b.returnDate}T${b.returnTime || '00:00'}`);
-                    return dateTimeA - dateTimeB; // Do mais antigo/urgente para o futuro
+                    return dateTimeA - dateTimeB; 
                 }
 
-                // 3. Novos importados sem responsável ficam logo em seguida no topo
                 const isImportedA = (a.responsible === "" || a.status === "Importado / Novo");
                 const isImportedB = (b.responsible === "" || b.status === "Importado / Novo");
                 if (isImportedA && !isImportedB) return -1;
@@ -792,12 +789,10 @@
                 const isImportedUnassigned = (n.responsible === "" || n.status === "Importado / Novo");
                 const hasScheduledReturn = (n.returnDate && n.returnTime);
 
-                // ESTILIZAÇÃO DO CARD DE ACORDO COM A PRIORIDADE
                 let cardClass = "bg-white rounded-lg shadow border p-4 flex flex-col justify-between";
                 let alertBadge = "";
 
                 if (hasScheduledReturn) {
-                    // Alerta em destaque para retornos programados
                     cardClass = "bg-red-50 rounded-lg shadow-md border-l-4 border-l-red-600 p-4 flex flex-col justify-between transform transition hover:scale-[1.02] border-t border-r border-b border-red-200";
                     alertBadge = `<div class="mb-2"><span class="animate-pulse bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-bell"></i> ⏰ HORA DO RETORNO PROGRAMADO</span></div>`;
                 } else if (isImportedUnassigned) {
@@ -842,7 +837,7 @@
             list.innerHTML = "";
             
             const inativas = db.filter(n => {
-                if (n.status !== "Concluído" && n.status !== "Não Atendido") return false;
+                if (n.status !== "Concluído" && n.status !== "Não Atendido" && n.status !== "Aguardando Contato Futuro") return false;
                 if (!searchTerm) return true;
 
                 const normName = normalizeText(n.clientName);
@@ -863,7 +858,10 @@
             }
 
             inativas.forEach(n => {
-                let badgeClass = n.status === "Não Atendido" ? "bg-red-100 text-red-800 border-red-300" : "bg-gray-200 text-gray-800 border-gray-400";
+                let badgeClass = "bg-gray-200 text-gray-800 border-gray-400";
+                if (n.status === "Não Atendido") badgeClass = "bg-red-100 text-red-800 border-red-300";
+                if (n.status === "Aguardando Contato Futuro") badgeClass = "bg-orange-100 text-orange-800 border-orange-300";
+
                 list.innerHTML += `
                     <div class="border p-4 rounded flex flex-col md:flex-row justify-between items-center bg-gray-50 hover:bg-gray-100 gap-4">
                         <div class="w-full md:w-auto">
@@ -1000,7 +998,7 @@
 
         function toggleReturnDate(selectId, dateDivId) {
             const val = document.getElementById(selectId).value;
-            const isConcluido = (val === 'Concluído' || val === 'Não Atendido');
+            const isConcluido = (val === 'Concluído' || val === 'Não Atendido' || val === 'Aguardando Contato Futuro');
             document.getElementById(dateDivId).style.display = isConcluido ? 'none' : 'block';
         }
 
@@ -1036,7 +1034,7 @@
             
             document.getElementById('editClientBox').classList.add('hidden');
 
-            const isInactive = (neg.status === "Concluído" || neg.status === "Não Atendido");
+            const isInactive = (neg.status === "Concluído" || neg.status === "Não Atendido" || neg.status === "Aguardando Contato Futuro");
             document.getElementById('actionForms').style.display = isInactive ? 'none' : 'block';
             document.getElementById('resumeArea').style.display = isInactive ? 'block' : 'none';
 
@@ -1096,7 +1094,7 @@
             const observationText = document.getElementById('actionObservation').value.trim();
             const proposalText = document.getElementById('actionProposal').value.trim();
 
-            let willArchive = (newStatus === "Concluído" || newStatus === "Não Atendido");
+            let willArchive = (newStatus === "Concluído" || newStatus === "Não Atendido" || newStatus === "Aguardando Contato Futuro");
 
             if(newStatus === "Concluído") {
                 showCustomConfirm(
@@ -1153,7 +1151,11 @@
                     neg.returnDate = null;
                     neg.returnTime = null;
                     summaryDetails.push(`Status alterado para: ${finalStatus}`);
-                    actionTitle = (finalStatus === "Não Atendido") ? "Não Atendido (Arquivado)" : "Encerramento de Negociação";
+                    if (finalStatus === "Aguardando Contato Futuro") {
+                        actionTitle = "Aguardando Contato Futuro";
+                    } else {
+                        actionTitle = (finalStatus === "Não Atendido") ? "Não Atendido (Arquivado)" : "Encerramento de Negociação";
+                    }
                 } else {
                     neg.status = finalStatus;
                     neg.returnDate = returnDate;
@@ -1205,7 +1207,7 @@
                 const screenDate = document.getElementById('actionReturnDate').value;
                 const screenTime = document.getElementById('actionReturnTime').value;
 
-                if (currentStatus !== "Concluído" && currentStatus !== "Não Atendido" && (!screenDate || !screenTime)) {
+                if (currentStatus !== "Concluído" && currentStatus !== "Não Atendido" && currentStatus !== "Aguardando Contato Futuro" && (!screenDate || !screenTime)) {
                     
                     showCustomConfirm(
                         "Ficha Aberta e Incompleta",
