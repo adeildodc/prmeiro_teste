@@ -280,9 +280,7 @@
         </div>
     </div>
 
-    <!-- NOVOS MODAIS CUSTOMIZADOS DE AVISO E CONFIRMAÇÃO (COM LETRAS GRANDES) -->
-    
-    <!-- Modal de Alerta Customizado -->
+    <!-- MODAIS CUSTOMIZADOS -->
     <div id="customAlertModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-[100]">
         <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl text-center transform transition-all">
             <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
@@ -294,7 +292,6 @@
         </div>
     </div>
 
-    <!-- Modal de Confirmação Customizado -->
     <div id="customConfirmModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-[100]">
         <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl text-center transform transition-all">
             <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
@@ -332,7 +329,6 @@
         let db = []; 
         let operatorsList = [];
 
-        // SISTEMA DE MODAIS CUSTOMIZADOS
         let confirmCallbackFn = null;
         let cancelCallbackFn = null;
 
@@ -372,7 +368,6 @@
             if (cancelCallbackFn) cancelCallbackFn();
         };
 
-        // INICIALIZAÇÃO E BANCO DE DADOS
         window.onload = function() {
             startDatabase();
         };
@@ -504,7 +499,7 @@
             return email.includes('@') && email.includes('.');
         }
 
-        // SISTEMA DE IMPORTAÇÃO CSV
+        // SISTEMA DE IMPORTAÇÃO CSV FLEXÍVEL (EXIGE APENAS O NOME)
         function openImportModal() {
             document.getElementById('csvFileInput').value = "";
             openModal('importModal');
@@ -537,26 +532,29 @@
                 let added = 0;
                 let ignored = 0;
 
-                // Loop ignorando o cabeçalho (i=1)
                 for(let i = 1; i < rows.length; i++) {
                     const row = rows[i].trim();
                     if(!row) continue;
                     
                     const cols = row.split(','); 
-                    if(cols.length < 4) continue; 
+                    if(cols.length < 1) continue; 
 
-                    const clientName = cols[0].trim();
-                    const cpf = cleanNumbers(cols[1]);
-                    const tel = cleanNumbers(cols[2]);
-                    const email = cols[3].trim();
+                    const clientName = cols[0] ? cols[0].trim() : "";
+                    const cpf = cols[1] ? cleanNumbers(cols[1]) : "";
+                    const tel = cols[2] ? cleanNumbers(cols[2]) : "";
+                    const email = cols[3] ? cols[3].trim() : "";
 
-                    if (!clientName || !tel) { ignored++; continue; }
+                    // CRITÉRIO FLEXÍVEL: Exige apenas que o Nome esteja preenchido!
+                    if (!clientName) { 
+                        ignored++; 
+                        continue; 
+                    }
 
-                    // Verifica se já existe pelo CPF ou Telefone
+                    // Verifica duplicidade apenas se houver CPF ou Telefone válidos preenchidos
                     const exists = db.find(n => {
                         const dbCpf = cleanNumbers(n.cpf);
                         const dbTel = cleanNumbers(n.tel);
-                        return (cpf && dbCpf === cpf) || (tel && dbTel === tel);
+                        return (cpf && dbCpf && dbCpf === cpf) || (tel && dbTel && dbTel === tel);
                     });
 
                     if (exists) {
@@ -564,14 +562,13 @@
                         continue;
                     }
 
-                    // Se não existe, cria como "Novo / Nunca contactado" (sem responsável)
                     const newNeg = {
                         id: generateId(),
                         clientName: clientName,
-                        cpf: cpf,
-                        tel: tel,
-                        email: email,
-                        responsible: "", // Vazio para ficar livre
+                        cpf: cpf || "Não informado",
+                        tel: tel || "Não informado",
+                        email: email || "Não informado",
+                        responsible: "", 
                         status: "Importado / Novo",
                         returnDate: "",
                         returnTime: "",
@@ -596,7 +593,7 @@
                     saveData();
                 }
                 
-                showCustomAlert("Importação Concluída!", `Resumo do processo:\n\n✅ ${added} novos clientes cadastrados.\n⚠️ ${ignored} linhas ignoradas (já existiam ou dados incompletos).`);
+                showCustomAlert("Importação Concluída!", `Resumo do processo:\n\n✅ ${added} novos clientes cadastrados.\n⚠️ ${ignored} linhas ignoradas (apenas linhas sem nome foram desconsideradas).`);
                 closeModal('importModal');
                 switchTab('active');
             };
@@ -604,16 +601,15 @@
             reader.readAsText(file);
         }
 
-        // Lógica de Tela
         function toggleEditClient() {
             const box = document.getElementById('editClientBox');
             const isHidden = box.classList.contains('hidden');
             if (isHidden) {
                 const neg = db.find(n => n.id === currentNegotiationId);
                 document.getElementById('editClientName').value = neg.clientName || '';
-                document.getElementById('editClientCpf').value = neg.cpf || '';
-                document.getElementById('editClientTel').value = neg.tel || '';
-                document.getElementById('editClientEmail').value = neg.email || '';
+                document.getElementById('editClientCpf').value = neg.cpf === 'Não informado' ? '' : neg.cpf;
+                document.getElementById('editClientTel').value = neg.tel === 'Não informado' ? '' : neg.tel;
+                document.getElementById('editClientEmail').value = neg.email === 'Não informado' ? '' : neg.email;
                 box.classList.remove('hidden');
             } else {
                 box.classList.add('hidden');
@@ -627,8 +623,8 @@
             const newTel = document.getElementById('editClientTel').value.trim();
             const newEmail = document.getElementById('editClientEmail').value.trim();
 
-            if (!newName || !newTel || !newEmail) {
-                showCustomAlert("Campos Obrigatórios", "Nome, Telefone e E-mail são obrigatórios para atualizar!");
+            if (!newName) {
+                showCustomAlert("Campo Obrigatório", "O Nome do cliente é obrigatório!");
                 return;
             }
 
@@ -637,20 +633,20 @@
                 return;
             }
 
-            if (!validatePhone(newTel)) {
-                showCustomAlert("Telefone Inválido", "O número de telefone digitado é inválido. Coloque o DDD e o número.");
+            if (newTel && newTel !== "Não informado" && !validatePhone(newTel)) {
+                showCustomAlert("Telefone Inválido", "O número de telefone digitado é inválido.");
                 return;
             }
 
-            if (!validateEmail(newEmail)) {
+            if (newEmail && newEmail !== "Não informado" && !validateEmail(newEmail)) {
                 showCustomAlert("E-mail Inválido", "O endereço de e-mail digitado é inválido.");
                 return;
             }
 
             neg.clientName = newName;
-            neg.cpf = newCpf;
-            neg.tel = newTel;
-            neg.email = newEmail;
+            neg.cpf = newCpf || "Não informado";
+            neg.tel = newTel || "Não informado";
+            neg.email = newEmail || "Não informado";
 
             neg.timeline.push({
                 date: getTimestamp(),
@@ -667,8 +663,8 @@
 
         function sendWhatsApp() {
             const neg = db.find(n => n.id === currentNegotiationId);
-            if (!neg || !neg.tel) {
-                showCustomAlert("Erro", "Telefone do cliente não encontrado!");
+            if (!neg || !neg.tel || neg.tel === "Não informado") {
+                showCustomAlert("Atenção", "Este cliente não possui telefone cadastrado. Edite os dados para adicionar o número antes de enviar.");
                 return;
             }
 
@@ -763,7 +759,6 @@
                        normEmail.includes(searchTerm);
             });
 
-            // Ordena para que os "Importados / Novos" (sem responsável) fiquem no topo
             ativas.sort((a, b) => {
                 if(a.responsible === "" && b.responsible !== "") return -1;
                 if(a.responsible !== "" && b.responsible === "") return 1;
@@ -778,8 +773,6 @@
             ativas.forEach(n => {
                 const canTakeover = n.allowTakeover === "Sim" || n.responsible === "";
                 const isMine = n.responsible === operator;
-                
-                // DESTAQUE VISUAL PARA IMPORTADOS/NUNCA CONTACTADOS
                 const isImportedUnassigned = (n.responsible === "" || n.status === "Importado / Novo");
                 
                 let cardClass = isImportedUnassigned 
