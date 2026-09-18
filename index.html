@@ -75,7 +75,7 @@
         </div>
     </div>
 
-    <!-- MODAL: Nova Negociação com Validação Rigorosa e Autocompletar -->
+    <!-- MODAL: Nova Negociação (Sem exigência de data inicial) -->
     <div id="newNegotiationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
             <h2 class="text-xl font-bold mb-4">Iniciar Novo Cadastro</h2>
@@ -111,20 +111,6 @@
                 </div>
                 <hr class="my-2">
                 <div>
-                    <label class="block text-sm font-bold">Status Inicial</label>
-                    <select id="newStatus" onchange="toggleReturnDate('newStatus', 'newReturnDateDiv')" class="w-full border p-2 rounded">
-                        <option value="Retornar em data combinada">Retornar em data combinada</option>
-                        <option value="Aguardando aceite">Aguardando aceite</option>
-                    </select>
-                </div>
-                <div id="newReturnDateDiv" class="mt-2">
-                    <label class="block text-sm font-bold">Data e Hora para Retorno</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="date" id="newReturnDate" class="w-full border p-2 rounded">
-                        <input type="time" id="newReturnTime" class="w-full border p-2 rounded">
-                    </div>
-                </div>
-                <div>
                     <label class="block text-sm font-bold">Permitir que outro atendente assuma?</label>
                     <select id="newAllowTakeover" class="w-full border p-2 rounded">
                         <option value="Sim">Sim</option>
@@ -133,12 +119,12 @@
                 </div>
                 <div>
                     <label class="block text-sm font-bold">Observação Inicial</label>
-                    <textarea id="newObservation" class="w-full border p-2 rounded" rows="2"></textarea>
+                    <textarea id="newObservation" class="w-full border p-2 rounded" rows="2" placeholder="Opcional..."></textarea>
                 </div>
                 
                 <div class="mt-6 flex justify-end space-x-3">
                     <button onclick="closeModal('newNegotiationModal')" class="bg-gray-400 text-white px-4 py-2 rounded">Cancelar</button>
-                    <button onclick="createNegotiation()" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar Cadastro</button>
+                    <button onclick="createNegotiation()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700">Salvar e Atender Cliente</button>
                 </div>
             </div>
             <div id="btnCancelStep1" class="mt-4 flex justify-end">
@@ -164,7 +150,7 @@
 
                 <!-- Formulário de Edição de Dados do Cliente (Oculto por padrão) -->
                 <div id="editClientBox" class="hidden bg-blue-50 p-3 rounded border border-blue-200 mb-3 space-y-2">
-                    <h3 class="text-xs font-bold text-blue-800"><i class="fas id-card"></i> Editar Cadastro do Devedor</h3>
+                    <h3 class="text-xs font-bold text-blue-800"><i class="fas fa-id-card"></i> Editar Cadastro do Devedor</h3>
                     <div>
                         <label class="block text-[10px] font-bold">Nome:</label>
                         <input type="text" id="editClientName" class="w-full border p-1 rounded text-xs bg-white">
@@ -414,7 +400,6 @@
             return email.includes('@') && email.includes('.');
         }
 
-        // Funções de Edição do Cliente
         function toggleEditClient() {
             const box = document.getElementById('editClientBox');
             const isHidden = box.classList.contains('hidden');
@@ -593,7 +578,7 @@
                     btnAcaoHTML = `<button disabled class="w-full bg-gray-300 text-gray-500 py-2 rounded text-sm cursor-not-allowed">Restrito a ${n.responsible}</button>`;
                 }
 
-                let returnInfo = (n.status === 'Retornar em data combinada' || n.status === 'Aguardando aceite') && n.returnDate ? `<p class="text-sm text-red-600 font-bold"><i class="fas fa-calendar"></i> Retorno: ${n.returnDate} às ${n.returnTime || '--:--'}</p>` : '';
+                let returnInfo = (n.status === 'Retornar em data combinada' || n.status === 'Aguardando aceite') && n.returnDate ? `<p class="text-sm text-red-600 font-bold"><i class="fas fa-calendar"></i> Retorno: ${n.returnDate} às ${n.returnTime || '--:--'}</p>` : `<p class="text-sm text-blue-600 font-bold"><i class="fas fa-clock"></i> Novo / Sem retorno agendado</p>`;
 
                 panel.innerHTML += `
                     <div class="bg-white rounded-lg shadow border p-4 flex flex-col justify-between">
@@ -715,14 +700,12 @@
             openDetails(id);
         }
 
+        // Cadastro inicial sem obrigação de data: entra direto na tela de atendimento (Figura 2)
         function createNegotiation() {
             const clientName = document.getElementById('newClientName').value.trim();
             const cpf = document.getElementById('newCpf').value.trim();
             const tel = document.getElementById('newTel').value.trim();
             const email = document.getElementById('newEmail').value.trim();
-            const status = document.getElementById('newStatus').value;
-            const returnDate = document.getElementById('newReturnDate').value;
-            const returnTime = document.getElementById('newReturnTime').value;
             const allowTakeover = document.getElementById('newAllowTakeover').value;
             const obs = document.getElementById('newObservation').value.trim();
 
@@ -737,27 +720,23 @@
             }
 
             if(!validatePhone(tel)) {
-                alert("Telefone inválido! Informe o DDD seguido do número (8 dígitos para fixo ou 9 para celular). Ex: (11) 98888-8888");
+                alert("Telefone inválido! Informe o DDD seguido do número.");
                 return;
             }
 
             if(!validateEmail(email)) {
-                alert("E-mail inválido! O e-mail deve conter '@' e '.'");
+                alert("E-mail inválido!");
                 return;
             }
 
-            if(!returnDate || !returnTime) {
-                alert("Preencha obrigatoriamente a Data e a Hora para retorno/aceite!");
-                return;
-            }
-
+            const newId = generateId();
             const newNeg = {
-                id: generateId(),
+                id: newId,
                 clientName, cpf, tel, email,
                 responsible: operator,
-                status, 
-                returnDate, 
-                returnTime,
+                status: "Em Atendimento / Novo", 
+                returnDate: "", 
+                returnTime: "",
                 allowTakeover, 
                 failedAttempts: 0,
                 observations: obs ? [obs] : [],
@@ -767,7 +746,7 @@
 
             newNeg.timeline.push({
                 date: getTimestamp(), operator: operator,
-                action: "Criação do Cadastro", detail: `Criado com status: ${status} para ${returnDate} às ${returnTime}` + (obs ? ` | Obs: ${obs}` : "")
+                action: "Criação do Cadastro", detail: `Cadastrado por ${operator}` + (obs ? ` | Obs: ${obs}` : "")
             });
 
             db.push(newNeg);
@@ -776,16 +755,10 @@
             
             document.getElementById('newClientName').value = ""; document.getElementById('newCpf').value = "";
             document.getElementById('newTel').value = ""; document.getElementById('newEmail').value = "";
-            document.getElementById('newReturnDate').value = ""; document.getElementById('newReturnTime').value = "";
             document.getElementById('newObservation').value = "";
             
-            switchTab('active');
-        }
-
-        function toggleReturnDate(selectId, dateDivId) {
-            const val = document.getElementById(selectId).value;
-            const isConcluido = (val === 'Concluído');
-            document.getElementById(dateDivId).style.display = isConcluido ? 'none' : 'block';
+            // Abre diretamente a janela de detalhes do cliente recém-criado (Figura 2)
+            openDetails(newId);
         }
 
         function takeover(id) {
@@ -821,8 +794,7 @@
             document.getElementById('resumeArea').style.display = isInactive ? 'block' : 'none';
 
             if(!isInactive) {
-                document.getElementById('actionStatus').value = neg.status === "Em negociação" ? "Retornar em data combinada" : neg.status;
-                toggleReturnDate('actionStatus', 'actionReturnDateDiv');
+                document.getElementById('actionStatus').value = (neg.status === "Em Atendimento / Novo" || neg.status === "Em negociação") ? "Retornar em data combinada" : neg.status;
                 if(neg.returnDate) document.getElementById('actionReturnDate').value = neg.returnDate;
                 if(neg.returnTime) document.getElementById('actionReturnTime').value = neg.returnTime;
             }
@@ -877,7 +849,7 @@
 
             if(newStatus !== "Concluído") {
                 if(!returnDate || !returnTime) {
-                    alert("Para 'Retornar em data combinada' ou 'Aguardando aceite', é obrigatório preencher a Data e a Hora!");
+                    alert("Para salvar, é obrigatório definir a Data e a Hora do próximo contato!");
                     return;
                 }
             }
