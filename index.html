@@ -499,7 +499,6 @@
             return email.includes('@') && email.includes('.');
         }
 
-        // SISTEMA DE IMPORTAÇÃO CSV FLEXÍVEL (EXIGE APENAS O NOME)
         function openImportModal() {
             document.getElementById('csvFileInput').value = "";
             openModal('importModal');
@@ -544,13 +543,11 @@
                     const tel = cols[2] ? cleanNumbers(cols[2]) : "";
                     const email = cols[3] ? cols[3].trim() : "";
 
-                    // CRITÉRIO FLEXÍVEL: Exige apenas que o Nome esteja preenchido!
                     if (!clientName) { 
                         ignored++; 
                         continue; 
                     }
 
-                    // Verifica duplicidade apenas se houver CPF ou Telefone válidos preenchidos
                     const exists = db.find(n => {
                         const dbCpf = cleanNumbers(n.cpf);
                         const dbTel = cleanNumbers(n.tel);
@@ -759,9 +756,28 @@
                        normEmail.includes(searchTerm);
             });
 
+            // ORDENAÇÃO INTELIGENTE POR CRONOLOGIA DE RETORNO E PRIORIDADE
             ativas.sort((a, b) => {
-                if(a.responsible === "" && b.responsible !== "") return -1;
-                if(a.responsible !== "" && b.responsible === "") return 1;
+                const hasReturnA = (a.returnDate && a.returnTime);
+                const hasReturnB = (b.returnDate && b.returnTime);
+
+                // 1. Quem tem data de retorno programada vem SEMPRE antes dos demais
+                if (hasReturnA && !hasReturnB) return -1;
+                if (!hasReturnA && hasReturnB) return 1;
+
+                // 2. Se ambos têm retorno programado, ordena pelo mais próximo cronologicamente (Data + Hora)
+                if (hasReturnA && hasReturnB) {
+                    const dateTimeA = new Date(`${a.returnDate}T${a.returnTime || '00:00'}`);
+                    const dateTimeB = new Date(`${b.returnDate}T${b.returnTime || '00:00'}`);
+                    return dateTimeA - dateTimeB; // Do mais antigo/urgente para o futuro
+                }
+
+                // 3. Novos importados sem responsável ficam logo em seguida no topo
+                const isImportedA = (a.responsible === "" || a.status === "Importado / Novo");
+                const isImportedB = (b.responsible === "" || b.status === "Importado / Novo");
+                if (isImportedA && !isImportedB) return -1;
+                if (!isImportedA && isImportedB) return 1;
+
                 return 0;
             });
 
@@ -774,14 +790,20 @@
                 const canTakeover = n.allowTakeover === "Sim" || n.responsible === "";
                 const isMine = n.responsible === operator;
                 const isImportedUnassigned = (n.responsible === "" || n.status === "Importado / Novo");
-                
-                let cardClass = isImportedUnassigned 
-                    ? "bg-purple-50 rounded-lg shadow-md border-l-4 border-l-purple-600 p-4 flex flex-col justify-between transform transition hover:scale-[1.02] border-t border-r border-b border-purple-200" 
-                    : "bg-white rounded-lg shadow border p-4 flex flex-col justify-between";
-                    
-                let alertBadge = isImportedUnassigned 
-                    ? `<div class="mb-2"><span class="animate-pulse bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-exclamation-triangle"></i> 🚨 NOVO - NUNCA CONTACTADO</span></div>` 
-                    : "";
+                const hasScheduledReturn = (n.returnDate && n.returnTime);
+
+                // ESTILIZAÇÃO DO CARD DE ACORDO COM A PRIORIDADE
+                let cardClass = "bg-white rounded-lg shadow border p-4 flex flex-col justify-between";
+                let alertBadge = "";
+
+                if (hasScheduledReturn) {
+                    // Alerta em destaque para retornos programados
+                    cardClass = "bg-red-50 rounded-lg shadow-md border-l-4 border-l-red-600 p-4 flex flex-col justify-between transform transition hover:scale-[1.02] border-t border-r border-b border-red-200";
+                    alertBadge = `<div class="mb-2"><span class="animate-pulse bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-bell"></i> ⏰ HORA DO RETORNO PROGRAMADO</span></div>`;
+                } else if (isImportedUnassigned) {
+                    cardClass = "bg-purple-50 rounded-lg shadow-md border-l-4 border-l-purple-600 p-4 flex flex-col justify-between transform transition hover:scale-[1.02] border-t border-r border-b border-purple-200";
+                    alertBadge = `<div class="mb-2"><span class="animate-pulse bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-exclamation-triangle"></i> 🚨 NOVO - NUNCA CONTACTADO</span></div>`;
+                }
 
                 let takeoverHTML = canTakeover && !isImportedUnassigned ? `<div class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 mb-2 rounded border border-green-300 inline-block"><i class="fas fa-unlock"></i> Livre para assumir</div>` : '';
                 
@@ -794,7 +816,7 @@
                     btnAcaoHTML = `<button disabled class="w-full bg-gray-300 text-gray-500 py-2 rounded text-sm cursor-not-allowed">Restrito a ${n.responsible}</button>`;
                 }
 
-                let returnInfo = (n.status === 'Retornar em data combinada' || n.status === 'Aguardando aceite') && n.returnDate ? `<p class="text-sm text-red-600 font-bold"><i class="fas fa-calendar"></i> Retorno: ${n.returnDate} às ${n.returnTime || '--:--'}</p>` : `<p class="text-sm text-blue-600 font-bold"><i class="fas fa-clock"></i> Novo / Sem retorno</p>`;
+                let returnInfo = hasScheduledReturn ? `<p class="text-sm text-red-700 font-bold"><i class="fas fa-calendar-alt"></i> Retorno: ${n.returnDate} às ${n.returnTime}</p>` : `<p class="text-sm text-blue-600 font-bold"><i class="fas fa-clock"></i> Sem retorno agendado</p>`;
 
                 panel.innerHTML += `
                     <div class="${cardClass}">
