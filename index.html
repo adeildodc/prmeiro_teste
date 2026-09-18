@@ -112,7 +112,7 @@
                 <hr class="my-2">
                 <div>
                     <label class="block text-sm font-bold">Status Inicial</label>
-                    <select id="newStatus" onchange="toggleReturnDate('newStatus', 'newReturnDateDiv', 'newReturnTimeDiv')" class="w-full border p-2 rounded">
+                    <select id="newStatus" onchange="toggleReturnDate('newStatus', 'newReturnDateDiv')" class="w-full border p-2 rounded">
                         <option value="Retornar em data combinada">Retornar em data combinada</option>
                         <option value="Aguardando aceite">Aguardando aceite</option>
                     </select>
@@ -166,7 +166,7 @@
                 <div id="actionForms" class="space-y-3">
                     <div class="bg-gray-50 p-3 rounded border">
                         <label class="block text-xs font-bold mb-1">Mudar Status (Obrigatório definir futuro)</label>
-                        <select id="actionStatus" onchange="toggleReturnDate('actionStatus', 'actionReturnDateDiv', 'actionReturnTimeDiv')" class="w-full border p-1.5 rounded mb-2 text-sm">
+                        <select id="actionStatus" onchange="toggleReturnDate('actionStatus', 'actionReturnDateDiv')" class="w-full border p-1.5 rounded mb-2 text-sm">
                             <option value="Retornar em data combinada">Retornar em data combinada</option>
                             <option value="Aguardando aceite">Aguardando aceite</option>
                             <option value="Concluído">Concluído</option>
@@ -324,7 +324,6 @@
             dbRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 db = data ? data : []; 
-                runStatusVerification(); // Executa verificação de prazos ao sincronizar dados
                 renderPanels();
 
                 if (currentNegotiationId) {
@@ -370,22 +369,6 @@
 
         function validateEmail(email) {
             return email.includes('@') && email.includes('.');
-        }
-
-        // Função de Verificação Automática de Prazos Vencidos ao fechar/sincronizar
-        function runStatusVerification() {
-            let updated = false;
-            const now = new Date();
-
-            db.forEach(n => {
-                if ((n.status === "Retornar em data combinada" || n.status === "Aguardando aceite") && n.returnDate && n.returnTime) {
-                    const deadline = new Date(`${n.returnDate}T${n.returnTime}`);
-                    if (now > deadline) {
-                        // Se o prazo venceu, marca como pendente/vencido ou arquiva se necessário
-                        // Aqui mantemos ativo mas sinalizamos o vencimento ou atualizamos o status se desejado
-                    }
-                }
-            });
         }
 
         function handleNameInput(val) {
@@ -676,7 +659,7 @@
             switchTab('active');
         }
 
-        function toggleReturnDate(selectId, dateDivId, timeDivId) {
+        function toggleReturnDate(selectId, dateDivId) {
             const val = document.getElementById(selectId).value;
             const isConcluido = (val === 'Concluído');
             document.getElementById(dateDivId).style.display = isConcluido ? 'none' : 'block';
@@ -714,7 +697,7 @@
 
             if(!isInactive) {
                 document.getElementById('actionStatus').value = neg.status === "Em negociação" ? "Retornar em data combinada" : neg.status;
-                toggleReturnDate('actionStatus', 'actionReturnDateDiv', 'actionReturnTimeDiv');
+                toggleReturnDate('actionStatus', 'actionReturnDateDiv');
                 if(neg.returnDate) document.getElementById('actionReturnDate').value = neg.returnDate;
                 if(neg.returnTime) document.getElementById('actionReturnTime').value = neg.returnTime;
             }
@@ -839,15 +822,21 @@
             }
         }
 
-        // Regra de Fechamento de Janela: Se fechar sem escolher futuro, vai pro histórico automaticamente
+        // Correção: Agora verifica se os campos de data/hora na tela estão preenchidos antes de questionar o fechamento
         function closeDetailsModal() {
             if (currentNegotiationId) {
                 const neg = db.find(n => n.id === currentNegotiationId);
-                if (neg && neg.status !== "Concluído" && neg.status !== "Não Atendido") {
-                    // Se fechou a tela sem definir um status de futuro (Retorno ou Aceite)
+                const currentStatus = document.getElementById('actionStatus').value;
+                const screenDate = document.getElementById('actionReturnDate').value;
+                const screenTime = document.getElementById('actionReturnTime').value;
+
+                // Se não for concluído e os campos de data/hora da tela estiverem vazios, aí sim questiona se quer arquivar
+                if (currentStatus !== "Concluído" && (!screenDate || !screenTime)) {
                     const confirmClose = confirm("Atenção: Você está fechando a tela sem definir uma data/hora de retorno ou aceite.\n\nClique em [OK] para arquivar/enviar esta ficha para o histórico.\nClique em [CANCELAR] para voltar e definir o próximo contato.");
                     if (confirmClose) {
                         neg.status = "Não Atendido";
+                        neg.returnDate = null;
+                        neg.returnTime = null;
                         neg.timeline.push({
                             date: getTimestamp(),
                             operator: operator,
