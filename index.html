@@ -163,6 +163,15 @@
                     Falhas de contato: <span id="detailFailedAttempts" class="font-bold text-red-600"></span>
                 </div>
 
+                <!-- Caixa de Mensagem Direta para o WhatsApp -->
+                <div class="bg-green-50 p-3 rounded border border-green-200 mb-3">
+                    <label class="block text-xs font-bold text-green-800 mb-1"><i class="fab fa-whatsapp"></i> Mensagem para o WhatsApp</label>
+                    <textarea id="whatsappMessageInput" class="w-full border p-1.5 rounded text-sm mb-2 bg-white" rows="2" placeholder="Digite a mensagem para enviar no WhatsApp..."></textarea>
+                    <button onclick="sendWhatsApp()" class="w-full bg-green-600 text-white font-bold p-2 rounded text-sm shadow hover:bg-green-700 transition flex items-center justify-center gap-2">
+                        <i class="fab fa-whatsapp text-lg"></i> Abrir WhatsApp com Mensagem
+                    </button>
+                </div>
+
                 <div id="actionForms" class="space-y-3">
                     <div class="bg-gray-50 p-3 rounded border">
                         <label class="block text-xs font-bold mb-1">Mudar Status (Obrigatório definir futuro)</label>
@@ -369,6 +378,26 @@
 
         function validateEmail(email) {
             return email.includes('@') && email.includes('.');
+        }
+
+        // Função para Disparar o WhatsApp com o texto digitado na caixa
+        function sendWhatsApp() {
+            const neg = db.find(n => n.id === currentNegotiationId);
+            if (!neg || !neg.tel) {
+                alert("Telefone do cliente não encontrado!");
+                return;
+            }
+
+            let phoneClean = cleanNumbers(neg.tel);
+            if (!phoneClean.startsWith("55")) {
+                phoneClean = "55" + phoneClean;
+            }
+
+            const msgText = document.getElementById('whatsappMessageInput').value.trim();
+            const encodedMessage = encodeURIComponent(msgText);
+
+            const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneClean}&text=${encodedMessage}`;
+            window.open(whatsappUrl, '_blank');
         }
 
         function handleNameInput(val) {
@@ -708,6 +737,7 @@
             document.getElementById('checkMissedCall').checked = false;
             document.getElementById('actionObservation').value = lastObs;
             document.getElementById('actionProposal').value = lastProp;
+            document.getElementById('whatsappMessageInput').value = `Olá ${neg.clientName}, tudo bem? Aqui é do setor de cobrança...`;
 
             renderTimeline(neg);
             openModal('detailsModal');
@@ -822,7 +852,6 @@
             }
         }
 
-        // Correção: Agora verifica se os campos de data/hora na tela estão preenchidos antes de questionar o fechamento
         function closeDetailsModal() {
             if (currentNegotiationId) {
                 const neg = db.find(n => n.id === currentNegotiationId);
@@ -830,7 +859,6 @@
                 const screenDate = document.getElementById('actionReturnDate').value;
                 const screenTime = document.getElementById('actionReturnTime').value;
 
-                // Se não for concluído e os campos de data/hora da tela estiverem vazios, aí sim questiona se quer arquivar
                 if (currentStatus !== "Concluído" && (!screenDate || !screenTime)) {
                     const confirmClose = confirm("Atenção: Você está fechando a tela sem definir uma data/hora de retorno ou aceite.\n\nClique em [OK] para arquivar/enviar esta ficha para o histórico.\nClique em [CANCELAR] para voltar e definir o próximo contato.");
                     if (confirmClose) {
@@ -848,7 +876,7 @@
                         switchTab('active');
                         return;
                     } else {
-                        return; // Retorna para a tela
+                        return;
                     }
                 }
             }
