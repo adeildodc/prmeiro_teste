@@ -226,17 +226,17 @@
                 <!-- 2. ACTION FORMS (Status e Salvar) -->
                 <div id="actionForms" class="space-y-3">
                     <div class="bg-gray-50 p-3 rounded border">
-                        <label class="block text-xs font-bold mb-1">Mudar Status (Obrigatório definir futuro)</label>
+                        <label class="block text-xs font-bold mb-1">Mudar Status (Obrigatório definir futuro se ativo/recorrente)</label>
                         <select id="actionStatus" onchange="toggleReturnDate('actionStatus', 'actionReturnDateDiv')" class="w-full border p-1.5 rounded mb-2 text-sm">
                             <option value="Retornar Dia">Retornar Dia</option>
                             <option value="Aguardando aceite">Aguardando aceite</option>
                             <option value="Ligar Novamente">Ligar Novamente</option>
-                            <option value="Cobrança Recorrente">Cobrança Recorrente</option>
+                            <option value="Cobrança Recorrente">Cobrança Recorrente (Mês a Mês)</option>
                             <option value="Não Atendido">Não Atendido (Arquivar no Histórico)</option>
                             <option value="Acordo Aceito / Concluído">Acordo Aceito / Concluído</option>
                         </select>
                         <div id="actionReturnDateDiv" class="mt-2">
-                            <label class="block text-[10px] font-bold">Data e Hora para Retorno:</label>
+                            <label class="block text-[10px] font-bold">Data e Hora para Retorno / Próximo Boleto:</label>
                             <div class="grid grid-cols-2 gap-1">
                                 <input type="date" id="actionReturnDate" class="w-full border p-1 rounded text-sm">
                                 <input type="time" id="actionReturnTime" class="w-full border p-1 rounded text-sm">
@@ -810,45 +810,39 @@
             document.getElementById('nameSuggestions').style.display = 'none';
         }
 
-        function switchTab(tab) {
+        function switchTab(tab, skipRender = false) {
             currentTab = tab;
-            const activePanel = document.getElementById('activePanel');
-            const recurringPanel = document.getElementById('recurringPanel');
-            const historyPanel = document.getElementById('historyPanel');
+            const searchTerm = normalizeText(document.getElementById('searchInput').value);
+            
             const btnActive = document.getElementById('btnTabActive');
             const btnRecurring = document.getElementById('btnTabRecurring');
             const btnHistory = document.getElementById('btnTabHistory');
-
-            activePanel.style.display = 'none';
-            recurringPanel.style.display = 'none';
-            historyPanel.style.display = 'none';
 
             btnActive.className = "px-4 py-2 bg-gray-300 text-gray-700 rounded font-bold hover:bg-gray-400";
             btnRecurring.className = "px-4 py-2 bg-gray-300 text-gray-700 rounded font-bold hover:bg-gray-400";
             btnHistory.className = "px-4 py-2 bg-gray-300 text-gray-700 rounded font-bold hover:bg-gray-400";
 
             if(tab === 'active') {
-                activePanel.style.display = 'grid';
                 btnActive.className = "px-4 py-2 bg-blue-600 text-white rounded font-bold";
             } else if(tab === 'recurring') {
-                recurringPanel.style.display = 'grid';
                 btnRecurring.className = "px-4 py-2 bg-blue-600 text-white rounded font-bold";
             } else {
-                historyPanel.style.display = 'block';
                 btnHistory.className = "px-4 py-2 bg-blue-600 text-white rounded font-bold";
             }
-            renderPanels();
+
+            // Só mexe no display dos painéis se NÃO estiver no meio de uma busca global
+            if (!searchTerm) {
+                document.getElementById('activePanel').style.display = (tab === 'active') ? 'grid' : 'none';
+                document.getElementById('recurringPanel').style.display = (tab === 'recurring') ? 'grid' : 'none';
+                document.getElementById('historyPanel').style.display = (tab === 'history') ? 'block' : 'none';
+            }
+
+            if (!skipRender) renderPanels();
         }
 
         function debounceSearch() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => { renderPanels(); }, 300);
-        }
-
-        function renderPanels() {
-            renderActive();
-            renderRecurring();
-            renderHistory();
         }
 
         function buildCardHtml(n) {
@@ -857,12 +851,13 @@
             const isMine = n.responsible === operator;
             const isImportedUnassigned = (n.responsible === "" || n.status === "Importado / Novo");
             const hasScheduledReturn = (n.returnDate && n.returnTime);
+            const isHistory = ["Concluído", "Acordo Aceito / Concluído", "Não Atendido", "Ligar Novamente"].includes(n.status);
 
             let cardClass = "bg-white rounded-lg shadow border p-4 flex flex-col justify-between";
             let alertBadge = "";
             let isOverdue = false, isUrgent = false;
 
-            if (hasScheduledReturn) {
+            if (hasScheduledReturn && !isHistory) {
                 const diffMs = new Date(`${n.returnDate}T${n.returnTime}`) - now;
                 if (diffMs < 0) isOverdue = true;
                 else if (diffMs <= 20 * 60 * 1000) isUrgent = true;
@@ -879,9 +874,17 @@
                 alertBadge = `<div class="mb-2"><span class="animate-pulse bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-exclamation-triangle"></i> 🚨 NOVO - NUNCA CONTACTADO</span></div>`;
             }
 
-            let btnAcaoHTML = isMine ? `<button onclick="openDetails('${n.id}')" class="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 shadow font-bold">Abrir Negociação</button>` :
-                              canTakeover ? `<button onclick="takeover('${n.id}')" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded text-sm font-bold shadow">Assumir Contato</button>` :
-                              `<button disabled class="w-full bg-gray-300 text-gray-500 py-2 rounded text-sm cursor-not-allowed">Restrito a ${n.responsible}</button>`;
+            // Se for do histórico, qualquer um pode abrir para ver (ou o dono)
+            let btnLabel = isHistory ? "Abrir Ficha (Histórico)" : "Abrir Negociação";
+            let btnAcaoHTML = "";
+            
+            if (isHistory || isMine) {
+                btnAcaoHTML = `<button onclick="openDetails('${n.id}')" class="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 shadow font-bold">${btnLabel}</button>`;
+            } else if (canTakeover) {
+                btnAcaoHTML = `<button onclick="takeover('${n.id}')" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded text-sm font-bold shadow">Assumir Contato</button>`;
+            } else {
+                btnAcaoHTML = `<button disabled class="w-full bg-gray-300 text-gray-500 py-2 rounded text-sm cursor-not-allowed">Restrito a ${n.responsible}</button>`;
+            }
 
             let returnInfo = hasScheduledReturn ? `<div class="bg-white p-2 rounded border border-red-300 my-2 text-center shadow-inner"><p class="text-xs text-red-600 font-bold uppercase"><i class="fas fa-calendar-alt"></i> Próximo Retorno:</p><p class="text-base text-red-700 font-extrabold">${formatDateBR(n.returnDate)} às ${n.returnTime}</p></div>` : `<p class="text-xs text-blue-600 font-bold my-2"><i class="fas fa-clock"></i> Sem retorno agendado</p>`;
             
@@ -916,18 +919,56 @@
             });
         }
 
-        function renderActive() {
+        function renderGlobalSearch(searchTerm) {
+            document.getElementById('activePanel').style.display = 'grid'; // Usamos o grid do painel ativo
+            document.getElementById('recurringPanel').style.display = 'none';
+            document.getElementById('historyPanel').style.display = 'none';
+            
             const panel = document.getElementById('activePanel');
+            const searchClean = cleanNumbers(document.getElementById('searchInput').value);
+            
+            const resultados = db.filter(n => {
+                const normName = normalizeText(n.clientName);
+                return normName.includes(searchTerm) || 
+                       (searchClean && cleanNumbers(n.cpf).includes(searchClean)) || 
+                       (searchClean && cleanNumbers(n.tel).includes(searchClean));
+            });
+
+            if (resultados.length === 0) {
+                panel.innerHTML = `<p class="col-span-full text-center text-gray-500 py-8">Nenhum cliente encontrado para "${document.getElementById('searchInput').value}".</p>`;
+                return;
+            }
+
+            let htmlContent = `<div class="col-span-full mb-2 bg-blue-100 text-blue-800 p-2 rounded border border-blue-200 font-bold text-sm text-center">Modo Busca Global: Encontrado(s) ${resultados.length} cliente(s) em todo o sistema.</div>`;
+            
+            // Ordena os resultados para manter a mesma lógica de prioridade de contato
+            sortItems(resultados).forEach(n => { htmlContent += buildCardHtml(n); });
+            
+            panel.innerHTML = htmlContent;
+        }
+
+        function renderPanels() {
             const searchTerm = normalizeText(document.getElementById('searchInput').value);
             
-            const ativas = db.filter(n => {
-                // Exclui os de outras abas
-                if (n.status === "Concluído" || n.status === "Acordo Aceito / Concluído" || n.status === "Não Atendido" || n.status === "Ligar Novamente" || n.status === "Cobrança Recorrente") return false;
+            if (searchTerm) {
+                // Se houver busca, renderiza o modo global ignorando a aba atual
+                renderGlobalSearch(searchTerm);
+            } else {
+                // Restaura a exibição baseada na aba que o operador clicou
+                switchTab(currentTab, true);
                 
-                if (!searchTerm) return true;
-                const normName = normalizeText(n.clientName);
-                const searchClean = cleanNumbers(document.getElementById('searchInput').value);
-                return normName.includes(searchTerm) || (searchClean && cleanNumbers(n.cpf).includes(searchClean)) || (searchClean && cleanNumbers(n.tel).includes(searchClean));
+                if (currentTab === 'active') renderActive();
+                if (currentTab === 'recurring') renderRecurring();
+                if (currentTab === 'history') renderHistory();
+            }
+        }
+
+        function renderActive() {
+            const panel = document.getElementById('activePanel');
+            const ativas = db.filter(n => {
+                // Exclui históricos e recorrentes
+                if (n.status === "Concluído" || n.status === "Acordo Aceito / Concluído" || n.status === "Não Atendido" || n.status === "Ligar Novamente" || n.status === "Cobrança Recorrente") return false;
+                return true;
             });
 
             sortItems(ativas);
@@ -944,17 +985,7 @@
 
         function renderRecurring() {
             const panel = document.getElementById('recurringPanel');
-            const searchTerm = normalizeText(document.getElementById('searchInput').value);
-            
-            const recorrentes = db.filter(n => {
-                // Filtra estritamente por Cobrança Recorrente
-                if (n.status !== "Cobrança Recorrente") return false;
-
-                if (!searchTerm) return true;
-                const normName = normalizeText(n.clientName);
-                const searchClean = cleanNumbers(document.getElementById('searchInput').value);
-                return normName.includes(searchTerm) || (searchClean && cleanNumbers(n.cpf).includes(searchClean)) || (searchClean && cleanNumbers(n.tel).includes(searchClean));
-            });
+            const recorrentes = db.filter(n => n.status === "Cobrança Recorrente");
 
             sortItems(recorrentes);
 
@@ -970,13 +1001,9 @@
 
         function renderHistory() {
             const list = document.getElementById('historyList');
-            const searchTerm = normalizeText(document.getElementById('searchInput').value);
             const inativas = db.filter(n => {
                 if (n.status !== "Concluído" && n.status !== "Acordo Aceito / Concluído" && n.status !== "Não Atendido" && n.status !== "Ligar Novamente") return false;
-                if (!searchTerm) return true;
-                const normName = normalizeText(n.clientName);
-                const searchClean = cleanNumbers(document.getElementById('searchInput').value);
-                return normName.includes(searchTerm) || (searchClean && cleanNumbers(n.cpf).includes(searchClean)) || (searchClean && cleanNumbers(n.tel).includes(searchClean));
+                return true;
             });
 
             if(inativas.length === 0) { list.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum cliente inativo encontrado.</p>`; return; }
@@ -1040,6 +1067,7 @@
 
         function toggleReturnDate(selectId, dateDivId) {
             const val = document.getElementById(selectId).value;
+            // Para "Cobrança Recorrente" a data continuará aparecendo, pois não está na lista abaixo
             document.getElementById(dateDivId).style.display = (['Concluído', 'Acordo Aceito / Concluído', 'Não Atendido'].includes(val)) ? 'none' : 'block';
         }
 
@@ -1143,7 +1171,7 @@
             if (newStatus === "Acordo Aceito / Concluído") {
                  summaryDetails.push(`✅ Acordo Fechado e Aceito pelo Cliente: ${tipoAcordo} - ${neg.propNovoQtd}x de R$ ${neg.propNovoValor}`);
             } else if (newStatus === "Cobrança Recorrente") {
-                 summaryDetails.push(`🔄 Status alterado para Cobrança Recorrente (Boleto mensal avulso)`);
+                 summaryDetails.push(`🔄 Status definido como Cobrança Recorrente (Acompanhamento Mês a Mês)`);
             }
 
             if (missedCallChecked) {
@@ -1180,6 +1208,9 @@
             isModalOpen = false; 
             currentNegotiationId = null;
             closeModal('detailsModal');
+            
+            // Força a atualização dos painéis para limpar a busca global se o usuário não apagou o texto antes de abrir a ficha
+            document.getElementById('searchInput').value = ""; 
             renderPanels();
         }
 
