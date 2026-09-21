@@ -60,7 +60,6 @@
                     <input type="text" id="searchInput" onkeyup="renderPanels()" placeholder="Buscar cliente..." class="w-full border pl-10 p-2 rounded shadow-sm focus:outline-none focus:border-blue-500">
                 </div>
                 
-                <!-- Botão de Importação -->
                 <button onclick="openImportModal()" class="bg-purple-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-purple-700 whitespace-nowrap">
                     <i class="fas fa-file-import"></i> Importar
                 </button>
@@ -166,11 +165,11 @@
         </div>
     </div>
 
-    <!-- MODAL: Detalhes e Ações da Negociação (Painel Unificado com Calculadora e Confissão de Dívida) -->
+    <!-- MODAL: Detalhes e Ações da Negociação (Painel Unificado com Ordem Corrigida) -->
     <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 w-full max-w-6xl shadow-xl flex gap-4 h-[94vh]">
             
-            <!-- Coluna Esquerda: Ações, Calculadora e Confissão de Dívida -->
+            <!-- Coluna Esquerda: Ações, Formulários, Proposta e Calculadora -->
             <div class="w-1/2 border-r pr-4 overflow-y-auto space-y-4">
                 <div class="flex justify-between items-start mb-1">
                     <h2 class="text-xl font-bold" id="detailClientName">Nome do Cliente</h2>
@@ -213,8 +212,126 @@
                     Falhas de contato: <span id="detailFailedAttempts" class="font-bold text-red-600"></span>
                 </div>
 
-                <!-- CALCULADORA INTEGRADA NA FICHA -->
-                <div class="bg-indigo-50 p-3 rounded border border-indigo-200">
+                <!-- 1. CAIXA DE WHATSAPP (Saudação Padrão no topo das ações) -->
+                <div class="bg-green-50 p-3 rounded border border-green-200">
+                    <label class="block text-xs font-bold text-green-800 mb-1"><i class="fab fa-whatsapp"></i> Caixa de Envio para o WhatsApp</label>
+                    <textarea id="whatsappMessageInput" class="w-full border p-1.5 rounded text-sm mb-2 bg-white" rows="4" placeholder="O termo gerado ou sua saudação aparecerá aqui..."></textarea>
+                    <button onclick="sendWhatsApp()" class="w-full bg-green-600 text-white font-bold p-2 rounded text-sm shadow hover:bg-green-700 transition flex items-center justify-center gap-2">
+                        <i class="fab fa-whatsapp text-lg"></i> Abrir WhatsApp com Mensagem
+                    </button>
+                </div>
+
+                <!-- 2. ACTION FORMS (Status e Salvar) -->
+                <div id="actionForms" class="space-y-3">
+                    <div class="bg-gray-50 p-3 rounded border">
+                        <label class="block text-xs font-bold mb-1">Mudar Status (Obrigatório definir futuro)</label>
+                        <select id="actionStatus" onchange="toggleReturnDate('actionStatus', 'actionReturnDateDiv')" class="w-full border p-1.5 rounded mb-2 text-sm">
+                            <option value="Retornar Dia">Retornar Dia</option>
+                            <option value="Aguardando aceite">Aguardando aceite</option>
+                            <option value="Ligar Novamente">Ligar Novamente</option>
+                            <option value="Não Atendido">Não Atendido (Arquivar no Histórico)</option>
+                            <option value="Concluído">Concluído</option>
+                        </select>
+                        <div id="actionReturnDateDiv" class="mt-2">
+                            <label class="block text-[10px] font-bold">Data e Hora para Retorno:</label>
+                            <div class="grid grid-cols-2 gap-1">
+                                <input type="date" id="actionReturnDate" class="w-full border p-1 rounded text-sm">
+                                <input type="time" id="actionReturnTime" class="w-full border p-1 rounded text-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-red-50 p-2.5 rounded border border-red-200 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-red-700 block"><i class="fas fa-phone-slash"></i> Registrar Não Atendimento</span>
+                            <span class="text-[10px] text-gray-600">Incrementa +1 falha no contador</span>
+                        </div>
+                        <input type="checkbox" id="checkMissedCall" class="w-4 h-4 text-red-600 rounded cursor-pointer">
+                    </div>
+
+                    <div class="bg-gray-50 p-3 rounded border">
+                        <label class="block text-xs font-bold mb-1">Adicionar / Editar Observação</label>
+                        <textarea id="actionObservation" class="w-full border p-1.5 rounded text-sm" rows="2" placeholder="Digite se houver..."></textarea>
+                    </div>
+
+                    <button onclick="saveUnifiedUpdates()" class="w-full bg-blue-600 text-white font-bold p-2.5 rounded shadow hover:bg-blue-700 transition">
+                        <i class="fas fa-save"></i> Salvar e Definir Próximo Contato
+                    </button>
+                </div>
+
+                <!-- 3. MÓDULO DE CONFISSÃO DE DÍVIDA (No final) -->
+                <div class="bg-blue-50 p-3 rounded border border-blue-200 space-y-3 mt-6">
+                    <h3 class="text-xs font-bold text-blue-900"><i class="fas fa-file-contract"></i> Termo de Confissão de Dívida & Proposta</h3>
+                    
+                    <!-- Escolha por Caixas de Marcação -->
+                    <div class="flex gap-4 text-xs font-bold bg-white p-2 rounded border">
+                        <label class="flex items-center gap-1 cursor-pointer">
+                            <input type="radio" name="agreementType" value="Reparcelamento" checked onchange="generateConfissaoDivida()"> Reparcelamento
+                        </label>
+                        <label class="flex items-center gap-1 cursor-pointer">
+                            <input type="radio" name="agreementType" value="Parcela Integral" onchange="generateConfissaoDivida()"> Parcela Integral
+                        </label>
+                    </div>
+
+                    <!-- Cenário Anterior (Atrasado + Futuro) -->
+                    <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2 rounded border">
+                        <div>
+                            <label class="block font-bold text-[10px]">Parcelas em Atraso:</label>
+                            <input type="text" id="propAtrasadoQtd" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 2 parcelas (R$ 300,00)">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-[10px]">Parcelas a Vencer (Futuras):</label>
+                            <input type="text" id="propFuturoQtd" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 3 parcelas (R$ 450,00)">
+                        </div>
+                    </div>
+
+                    <!-- Nova Condição Acordada -->
+                    <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2 rounded border">
+                        <div>
+                            <label class="block font-bold text-[10px]">Novo Nº de Parcelas:</label>
+                            <input type="number" id="propNovoQtd" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 4">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-[10px]">Valor da Nova Parcela (R$):</label>
+                            <input type="text" id="propNovoValor" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 120,00">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-[10px]">Vencimento Base / Inicial:</label>
+                            <input type="date" id="propVencimento" onchange="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-[10px]">Desconto Aplicado:</label>
+                            <input type="text" id="propDesconto" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: R$ 50,00 ou 10%">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block font-bold text-[10px]">Renegociar Valor Futuro?</label>
+                            <select id="propRenegociarFuturo" onchange="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs bg-white">
+                                <option value="Não">Não</option>
+                                <option value="Sim">Sim</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Confirmação de Aceite -->
+                    <div class="bg-amber-100 p-2 rounded border border-amber-300 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-amber-900 block"><i class="fas fa-check-circle"></i> Aceite do Cliente Confirmado</span>
+                            <span class="text-[10px] text-gray-700">Marca se o cliente concordou com a confissão de dívida.</span>
+                        </div>
+                        <input type="checkbox" id="propAcceptedCheck" onchange="generateConfissaoDivida()" class="w-5 h-5 text-amber-600 rounded cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-900 mb-1">Prévia da Confissão de Dívida:</label>
+                        <textarea id="propTermText" class="w-full border p-2 rounded text-xs bg-white font-mono" rows="6" readonly></textarea>
+                        <button onclick="document.getElementById('whatsappMessageInput').value = document.getElementById('propTermText').value" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold p-2 rounded text-xs mt-2 transition flex items-center justify-center gap-2 shadow">
+                            <i class="fas fa-arrow-up"></i> Enviar este Termo para a Caixa do WhatsApp acima
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4. CALCULADORA INTEGRADA NA FICHA (Também no final) -->
+                <div class="bg-indigo-50 p-3 rounded border border-indigo-200 mt-4">
                     <h3 class="text-xs font-bold text-indigo-900 mb-2 flex items-center gap-1">
                         <i class="fas fa-calculator"></i> Calculadora de Negociação
                     </h3>
@@ -277,120 +394,6 @@
                             <input type="number" id="calcVMed" step="0.01" oninput="calculateFromV()" class="border p-1 rounded text-xs" placeholder="Vmed (Valor)">
                         </div>
                     </div>
-                </div>
-
-                <!-- MÓDULO DE CONFISSÃO DE DÍVIDA & PROPOSTA DINÂMICA -->
-                <div class="bg-blue-50 p-3 rounded border border-blue-200 space-y-3">
-                    <h3 class="text-xs font-bold text-blue-900"><i class="fas fa-file-contract"></i> Termo de Confissão de Dívida & Proposta</h3>
-                    
-                    <!-- Escolha por Caixas de Marcação -->
-                    <div class="flex gap-4 text-xs font-bold bg-white p-2 rounded border">
-                        <label class="flex items-center gap-1 cursor-pointer">
-                            <input type="radio" name="agreementType" value="Reparcelamento" checked onchange="generateConfissaoDivida()"> Reparcelamento
-                        </label>
-                        <label class="flex items-center gap-1 cursor-pointer">
-                            <input type="radio" name="agreementType" value="Parcela Integral" onchange="generateConfissaoDivida()"> Parcela Integral
-                        </label>
-                    </div>
-
-                    <!-- Cenário Anterior (Atrasado + Futuro) -->
-                    <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2 rounded border">
-                        <div>
-                            <label class="block font-bold text-[10px]">Parcelas em Atraso:</label>
-                            <input type="text" id="propAtrasadoQtd" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 2 parcelas (R$ 300,00)">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-[10px]">Parcelas a Vencer (Futuras):</label>
-                            <input type="text" id="propFuturoQtd" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 3 parcelas (R$ 450,00)">
-                        </div>
-                    </div>
-
-                    <!-- Nova Condição Acordada -->
-                    <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2 rounded border">
-                        <div>
-                            <label class="block font-bold text-[10px]">Novo Nº de Parcelas:</label>
-                            <input type="number" id="propNovoQtd" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 4">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-[10px]">Valor da Nova Parcela (R$):</label>
-                            <input type="text" id="propNovoValor" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 120,00">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-[10px]">Vencimento Base / Inicial:</label>
-                            <input type="date" id="propVencimento" onchange="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-[10px]">Desconto Aplicado:</label>
-                            <input type="text" id="propDesconto" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: R$ 50,00 ou 10%">
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block font-bold text-[10px]">Renegociar Valor Futuro?</label>
-                            <select id="propRenegociarFuturo" onchange="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs bg-white">
-                                <option value="Não">Não</option>
-                                <option value="Sim">Sim</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Confirmação de Aceite -->
-                    <div class="bg-amber-100 p-2 rounded border border-amber-300 flex items-center justify-between">
-                        <div>
-                            <span class="text-xs font-bold text-amber-900 block"><i class="fas fa-check-circle"></i> Aceite do Cliente Confirmado</span>
-                            <span class="text-[10px] text-gray-700">Marca se o cliente concordou com a confissão de dívida.</span>
-                        </div>
-                        <input type="checkbox" id="propAcceptedCheck" onchange="generateConfissaoDivida()" class="w-5 h-5 text-amber-600 rounded cursor-pointer">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-blue-900 mb-1">Prévia da Confissão de Dívida (Enviada ao WhatsApp):</label>
-                        <textarea id="propTermText" class="w-full border p-2 rounded text-xs bg-white font-mono" rows="6" readonly></textarea>
-                    </div>
-                </div>
-
-                <!-- Caixa de Mensagem Direta para o WhatsApp -->
-                <div class="bg-green-50 p-3 rounded border border-green-200">
-                    <label class="block text-xs font-bold text-green-800 mb-1"><i class="fab fa-whatsapp"></i> Caixa de Envio para o WhatsApp</label>
-                    <textarea id="whatsappMessageInput" class="w-full border p-1.5 rounded text-sm mb-2 bg-white" rows="4" placeholder="O termo gerado aparecerá aqui automaticamente..."></textarea>
-                    <button onclick="sendWhatsApp()" class="w-full bg-green-600 text-white font-bold p-2 rounded text-sm shadow hover:bg-green-700 transition flex items-center justify-center gap-2">
-                        <i class="fab fa-whatsapp text-lg"></i> Abrir WhatsApp com Mensagem
-                    </button>
-                </div>
-
-                <div id="actionForms" class="space-y-3">
-                    <div class="bg-gray-50 p-3 rounded border">
-                        <label class="block text-xs font-bold mb-1">Mudar Status (Obrigatório definir futuro)</label>
-                        <select id="actionStatus" onchange="toggleReturnDate('actionStatus', 'actionReturnDateDiv')" class="w-full border p-1.5 rounded mb-2 text-sm">
-                            <option value="Retornar Dia">Retornar Dia</option>
-                            <option value="Aguardando aceite">Aguardando aceite</option>
-                            <option value="Ligar Novamente">Ligar Novamente</option>
-                            <option value="Não Atendido">Não Atendido (Arquivar no Histórico)</option>
-                            <option value="Concluído">Concluído</option>
-                        </select>
-                        <div id="actionReturnDateDiv" class="mt-2">
-                            <label class="block text-[10px] font-bold">Data e Hora para Retorno:</label>
-                            <div class="grid grid-cols-2 gap-1">
-                                <input type="date" id="actionReturnDate" class="w-full border p-1 rounded text-sm">
-                                <input type="time" id="actionReturnTime" class="w-full border p-1 rounded text-sm">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-red-50 p-2.5 rounded border border-red-200 flex items-center justify-between">
-                        <div>
-                            <span class="text-xs font-bold text-red-700 block"><i class="fas fa-phone-slash"></i> Registrar Não Atendimento</span>
-                            <span class="text-[10px] text-gray-600">Incrementa +1 falha no contador</span>
-                        </div>
-                        <input type="checkbox" id="checkMissedCall" class="w-4 h-4 text-red-600 rounded cursor-pointer">
-                    </div>
-
-                    <div class="bg-gray-50 p-3 rounded border">
-                        <label class="block text-xs font-bold mb-1">Adicionar / Editar Observação</label>
-                        <textarea id="actionObservation" class="w-full border p-1.5 rounded text-sm" rows="2" placeholder="Digite se houver..."></textarea>
-                    </div>
-
-                    <button onclick="saveUnifiedUpdates()" class="w-full bg-blue-600 text-white font-bold p-2.5 rounded shadow hover:bg-blue-700 transition">
-                        <i class="fas fa-save"></i> Salvar e Definir Próximo Contato
-                    </button>
                 </div>
 
                 <div id="resumeArea" class="hidden bg-yellow-50 p-4 rounded border border-yellow-200 mb-4 mt-2">
@@ -536,7 +539,8 @@
         }
 
         // Gerador de Confissão de Dívida e Proposta Completa
-        function generateConfissaoDivida() {
+        // isLoad = true previne que a caixa do Whatsapp seja sobrescrita automaticamente ao abrir a ficha
+        function generateConfissaoDivida(isLoad = false) {
             const neg = db.find(n => n.id === currentNegotiationId);
             const clientName = neg ? neg.clientName : "Cliente";
             const clientCpf = neg ? (neg.cpf || "Não informado") : "Não informado";
@@ -574,7 +578,10 @@
                           `Respeitosamente,\n*Escola Instructiva*`;
 
             document.getElementById('propTermText').value = termo;
-            document.getElementById('whatsappMessageInput').value = termo;
+            
+            if (!isLoad) {
+                document.getElementById('whatsappMessageInput').value = termo;
+            }
         }
 
         function showCustomAlert(title, message) {
@@ -1041,7 +1048,12 @@
                 }
             }
 
-            generateConfissaoDivida();
+            // Ao abrir a ficha, gera a confissão, MAS não joga para a caixa do Whatsapp ainda (isLoad = true)
+            generateConfissaoDivida(true); 
+            
+            // Coloca a mensagem padrão na caixa do WhatsApp ao carregar a ficha
+            document.getElementById('whatsappMessageInput').value = `Olá, Sr(a). ${neg.clientName}. Tudo bem? Aqui é ${operator}, da Escola Instructiva. Gostaria muito de falar com o(a) senhor(a). Podemos conversar um minutinho?`;
+
             renderTimeline(neg);
             openModal('detailsModal');
         }
