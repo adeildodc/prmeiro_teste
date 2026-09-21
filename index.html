@@ -60,11 +60,6 @@
                     <input type="text" id="searchInput" onkeyup="renderPanels()" placeholder="Buscar cliente..." class="w-full border pl-10 p-2 rounded shadow-sm focus:outline-none focus:border-blue-500">
                 </div>
                 
-                <!-- Botão Calculadora -->
-                <button onclick="openCalculatorModal()" class="bg-indigo-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-indigo-700 whitespace-nowrap">
-                    <i class="fas fa-calculator"></i> Calculadora
-                </button>
-
                 <!-- Botão de Importação -->
                 <button onclick="openImportModal()" class="bg-purple-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-purple-700 whitespace-nowrap">
                     <i class="fas fa-file-import"></i> Importar
@@ -82,95 +77,6 @@
             <div class="bg-white rounded shadow p-4">
                 <h2 class="text-xl font-bold mb-4">Negociações Concluídas e Não Atendidas</h2>
                 <div id="historyList" class="space-y-2"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: Calculadora de Negociação -->
-    <div id="calculatorModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-calculator text-indigo-600"></i> Calculadora de Negociação</h2>
-                <button onclick="closeModal('calculatorModal')" class="text-gray-500 hover:text-gray-700 text-xl font-bold">&times;</button>
-            </div>
-
-            <!-- Bloco 1: Atrasados -->
-            <div class="bg-gray-50 p-4 rounded border mb-4">
-                <h3 class="font-bold text-sm text-blue-800 mb-2"><i class="fas fa-file-invoice-dollar"></i> Bloco 1: Atrasados & Desconto</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold mb-1">Atrasado Total (R$)</label>
-                        <input type="number" id="calcAtrasadoTotal" step="0.01" oninput="calculateBloco1()" class="w-full border p-2 rounded text-sm bg-white" placeholder="0.00">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold mb-1">Desconto (%)</label>
-                        <input type="number" id="calcDescontoPercent" step="0.01" oninput="calculateBloco1()" class="w-full border p-2 rounded text-sm bg-white" placeholder="0.00">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold mb-1">Valor do Desconto (R$)</label>
-                        <input type="text" id="calcValorDesconto" readonly class="w-full border p-2 rounded text-sm bg-gray-100 font-bold text-red-600" placeholder="0.00">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold mb-1">Valor c/ Desconto (R$)</label>
-                        <input type="text" id="calcValorComDesconto" readonly class="w-full border p-2 rounded text-sm bg-gray-100 font-bold text-green-600" placeholder="0.00">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bloco 2: Por Vencer -->
-            <div class="bg-gray-50 p-4 rounded border mb-4">
-                <h3 class="font-bold text-sm text-blue-800 mb-2"><i class="fas fa-calendar-plus"></i> Bloco 2: Por Vencer (Parcelas Futuras)</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold mb-1">Nº de Parcelas</label>
-                        <input type="number" id="calcNumParcelas" oninput="calculateBloco2()" class="w-full border p-2 rounded text-sm bg-white" placeholder="0">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold mb-1">Valor da Parcela (R$)</label>
-                        <input type="number" id="calcValorParcela" step="0.01" oninput="calculateBloco2()" class="w-full border p-2 rounded text-sm bg-white" placeholder="0.00">
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-bold mb-1">Total por Vencer (R$)</label>
-                        <input type="text" id="calcTotalPorVencer" readonly class="w-full border p-2 rounded text-sm bg-gray-100 font-bold text-blue-600" placeholder="0.00">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bloco 3: Interpolação Linear -->
-            <div class="bg-gray-50 p-4 rounded border mb-4">
-                <h3 class="font-bold text-sm text-blue-800 mb-2"><i class="fas fa-chart-line"></i> Bloco 3: Interpolação Linear</h3>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-                    <div>
-                        <label class="block text-[10px] font-bold">Valor I (VI)</label>
-                        <input type="number" id="calcVI" step="0.01" oninput="calculateInterpolation()" class="w-full border p-1.5 rounded text-xs bg-white" placeholder="Ex: 100">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold">Parcela I (PI)</label>
-                        <input type="number" id="calcPI" oninput="calculateInterpolation()" class="w-full border p-1.5 rounded text-xs bg-white" placeholder="Ex: 1">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold">Valor F (VF)</label>
-                        <input type="number" id="calcVF" step="0.01" oninput="calculateInterpolation()" class="w-full border p-1.5 rounded text-xs bg-white" placeholder="Ex: 500">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold">Parcela F (PF)</label>
-                        <input type="number" id="calcPF" oninput="calculateInterpolation()" class="w-full border p-1.5 rounded text-xs bg-white" placeholder="Ex: 10">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t pt-2">
-                    <div>
-                        <label class="block text-xs font-bold mb-1">Parcela Mediana (Pmed)</label>
-                        <input type="number" id="calcPMed" oninput="calculateFromP()" class="w-full border p-2 rounded text-sm bg-white border-indigo-300" placeholder="Digite parcela...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold mb-1">Valor Mediano (Vmed)</label>
-                        <input type="number" id="calcVMed" step="0.01" oninput="calculateFromV()" class="w-full border p-2 rounded text-sm bg-white border-indigo-300" placeholder="Digite valor...">
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex justify-end">
-                <button onclick="closeModal('calculatorModal')" class="bg-gray-300 text-gray-800 px-4 py-2 rounded font-bold hover:bg-gray-400">Fechar Calculadora</button>
             </div>
         </div>
     </div>
@@ -260,10 +166,12 @@
         </div>
     </div>
 
-    <!-- MODAL: Detalhes e Ações da Negociação (Painel Unificado) -->
+    <!-- MODAL: Detalhes e Ações da Negociação (Painel Unificado com Calculadora e Confissão de Dívida) -->
     <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 w-full max-w-5xl shadow-xl flex gap-4 h-[90vh]">
-            <div class="w-1/3 border-r pr-4 overflow-y-auto">
+        <div class="bg-white rounded-lg p-6 w-full max-w-6xl shadow-xl flex gap-4 h-[94vh]">
+            
+            <!-- Coluna Esquerda: Ações, Calculadora e Confissão de Dívida -->
+            <div class="w-1/2 border-r pr-4 overflow-y-auto space-y-4">
                 <div class="flex justify-between items-start mb-1">
                     <h2 class="text-xl font-bold" id="detailClientName">Nome do Cliente</h2>
                     <button onclick="toggleEditClient()" class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300 transition" title="Editar dados cadastrais">
@@ -300,16 +208,149 @@
                     </div>
                 </div>
                 
-                <div class="mb-4 text-sm bg-gray-100 p-2 rounded">
-                    Resp: <span id="detailResponsible" class="font-bold"></span><br>
-                    Status: <span id="detailStatusBadge" class="font-bold text-blue-700"></span><br>
+                <div class="text-sm bg-gray-100 p-2 rounded">
+                    Resp: <span id="detailResponsible" class="font-bold"></span> | Status: <span id="detailStatusBadge" class="font-bold text-blue-700"></span><br>
                     Falhas de contato: <span id="detailFailedAttempts" class="font-bold text-red-600"></span>
                 </div>
 
+                <!-- CALCULADORA INTEGRADA NA FICHA -->
+                <div class="bg-indigo-50 p-3 rounded border border-indigo-200">
+                    <h3 class="text-xs font-bold text-indigo-900 mb-2 flex items-center gap-1">
+                        <i class="fas fa-calculator"></i> Calculadora de Negociação
+                    </h3>
+                    
+                    <!-- Bloco 1: Atrasados -->
+                    <div class="bg-white p-2 rounded border mb-2 text-xs">
+                        <span class="font-bold text-blue-800 block mb-1">Bloco 1: Atrasados & Desconto</span>
+                        <div class="grid grid-cols-2 gap-1 mb-1">
+                            <div>
+                                <label class="block text-[10px] font-semibold">Atrasado Total (R$)</label>
+                                <input type="number" id="calcAtrasadoTotal" step="0.01" oninput="calculateBloco1()" class="w-full border p-1 rounded text-xs" placeholder="0.00">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold">Desconto (%)</label>
+                                <input type="number" id="calcDescontoPercent" step="0.01" oninput="calculateBloco1()" class="w-full border p-1 rounded text-xs" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1">
+                            <div>
+                                <label class="block text-[10px] font-semibold">Val. Desconto:</label>
+                                <input type="text" id="calcValorDesconto" readonly class="w-full border p-1 rounded text-xs bg-gray-100 font-bold text-red-600" placeholder="0.00">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold">Val. c/ Desconto:</label>
+                                <input type="text" id="calcValorComDesconto" readonly class="w-full border p-1 rounded text-xs bg-gray-100 font-bold text-green-600" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bloco 2: Por Vencer -->
+                    <div class="bg-white p-2 rounded border mb-2 text-xs">
+                        <span class="font-bold text-blue-800 block mb-1">Bloco 2: Por Vencer</span>
+                        <div class="grid grid-cols-2 gap-1 mb-1">
+                            <div>
+                                <label class="block text-[10px] font-semibold">Nº Parcelas</label>
+                                <input type="number" id="calcNumParcelas" oninput="calculateBloco2()" class="w-full border p-1 rounded text-xs" placeholder="0">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-semibold">Val. Parcela (R$)</label>
+                                <input type="number" id="calcValorParcela" step="0.01" oninput="calculateBloco2()" class="w-full border p-1 rounded text-xs" placeholder="0.00">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold">Total por Vencer:</label>
+                            <input type="text" id="calcTotalPorVencer" readonly class="w-full border p-1 rounded text-xs bg-gray-100 font-bold text-blue-600" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <!-- Bloco 3: Interpolação Linear -->
+                    <div class="bg-white p-2 rounded border text-xs">
+                        <span class="font-bold text-blue-800 block mb-1">Bloco 3: Interpolação Linear</span>
+                        <div class="grid grid-cols-4 gap-1 mb-1">
+                            <input type="number" id="calcVI" step="0.01" oninput="calculateInterpolation()" class="border p-1 rounded text-[10px]" placeholder="VI">
+                            <input type="number" id="calcPI" oninput="calculateInterpolation()" class="border p-1 rounded text-[10px]" placeholder="PI">
+                            <input type="number" id="calcVF" step="0.01" oninput="calculateInterpolation()" class="border p-1 rounded text-[10px]" placeholder="VF">
+                            <input type="number" id="calcPF" oninput="calculateInterpolation()" class="border p-1 rounded text-[10px]" placeholder="PF">
+                        </div>
+                        <div class="grid grid-cols-2 gap-1">
+                            <input type="number" id="calcPMed" oninput="calculateFromP()" class="border p-1 rounded text-xs" placeholder="Pmed (Parcela)">
+                            <input type="number" id="calcVMed" step="0.01" oninput="calculateFromV()" class="border p-1 rounded text-xs" placeholder="Vmed (Valor)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MÓDULO DE CONFISSÃO DE DÍVIDA & PROPOSTA DINÂMICA -->
+                <div class="bg-blue-50 p-3 rounded border border-blue-200 space-y-3">
+                    <h3 class="text-xs font-bold text-blue-900"><i class="fas fa-file-contract"></i> Termo de Confissão de Dívida & Proposta</h3>
+                    
+                    <!-- Escolha por Caixas de Marcação -->
+                    <div class="flex gap-4 text-xs font-bold bg-white p-2 rounded border">
+                        <label class="flex items-center gap-1 cursor-pointer">
+                            <input type="radio" name="agreementType" value="Reparcelamento" checked onchange="generateConfissaoDivida()"> Reparcelamento
+                        </label>
+                        <label class="flex items-center gap-1 cursor-pointer">
+                            <input type="radio" name="agreementType" value="Parcela Integral" onchange="generateConfissaoDivida()"> Parcela Integral
+                        </label>
+                    </div>
+
+                    <!-- Cenário Anterior (Atrasado + Futuro) -->
+                    <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2 rounded border">
+                        <div>
+                            <label class="block font-bold text-[10px]">Parcelas em Atraso:</label>
+                            <input type="text" id="propAtrasadoQtd" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 2 parcelas (R$ 300,00)">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-[10px]">Parcelas a Vencer (Futuras):</label>
+                            <input type="text" id="propFuturoQtd" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 3 parcelas (R$ 450,00)">
+                        </div>
+                    </div>
+
+                    <!-- Nova Condição Acordada -->
+                    <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2 rounded border">
+                        <div>
+                            <label class="block font-bold text-[10px]">Novo Nº de Parcelas:</label>
+                            <input type="number" id="propNovoQtd" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 4">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-[10px]">Valor da Nova Parcela (R$):</label>
+                            <input type="text" id="propNovoValor" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 120,00">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-[10px]">Vencimento Base / Inicial:</label>
+                            <input type="date" id="propVencimento" onchange="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-[10px]">Desconto Aplicado:</label>
+                            <input type="text" id="propDesconto" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: R$ 50,00 ou 10%">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block font-bold text-[10px]">Renegociar Valor Futuro?</label>
+                            <select id="propRenegociarFuturo" onchange="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs bg-white">
+                                <option value="Não">Não</option>
+                                <option value="Sim">Sim</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Confirmação de Aceite -->
+                    <div class="bg-amber-100 p-2 rounded border border-amber-300 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-bold text-amber-900 block"><i class="fas fa-check-circle"></i> Aceite do Cliente Confirmado</span>
+                            <span class="text-[10px] text-gray-700">Marca se o cliente concordou com a confissão de dívida.</span>
+                        </div>
+                        <input type="checkbox" id="propAcceptedCheck" onchange="generateConfissaoDivida()" class="w-5 h-5 text-amber-600 rounded cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-900 mb-1">Prévia da Confissão de Dívida (Enviada ao WhatsApp):</label>
+                        <textarea id="propTermText" class="w-full border p-2 rounded text-xs bg-white font-mono" rows="6" readonly></textarea>
+                    </div>
+                </div>
+
                 <!-- Caixa de Mensagem Direta para o WhatsApp -->
-                <div class="bg-green-50 p-3 rounded border border-green-200 mb-3">
-                    <label class="block text-xs font-bold text-green-800 mb-1"><i class="fab fa-whatsapp"></i> Mensagem para o WhatsApp</label>
-                    <textarea id="whatsappMessageInput" class="w-full border p-1.5 rounded text-sm mb-2 bg-white" rows="3" placeholder="Digite a mensagem para enviar no WhatsApp..."></textarea>
+                <div class="bg-green-50 p-3 rounded border border-green-200">
+                    <label class="block text-xs font-bold text-green-800 mb-1"><i class="fab fa-whatsapp"></i> Caixa de Envio para o WhatsApp</label>
+                    <textarea id="whatsappMessageInput" class="w-full border p-1.5 rounded text-sm mb-2 bg-white" rows="4" placeholder="O termo gerado aparecerá aqui automaticamente..."></textarea>
                     <button onclick="sendWhatsApp()" class="w-full bg-green-600 text-white font-bold p-2 rounded text-sm shadow hover:bg-green-700 transition flex items-center justify-center gap-2">
                         <i class="fab fa-whatsapp text-lg"></i> Abrir WhatsApp com Mensagem
                     </button>
@@ -347,11 +388,6 @@
                         <textarea id="actionObservation" class="w-full border p-1.5 rounded text-sm" rows="2" placeholder="Digite se houver..."></textarea>
                     </div>
 
-                    <div class="bg-gray-50 p-3 rounded border">
-                        <label class="block text-xs font-bold mb-1">Adicionar / Editar Proposta</label>
-                        <textarea id="actionProposal" class="w-full border p-1.5 rounded text-sm" rows="2" placeholder="Digite se houver..."></textarea>
-                    </div>
-
                     <button onclick="saveUnifiedUpdates()" class="w-full bg-blue-600 text-white font-bold p-2.5 rounded shadow hover:bg-blue-700 transition">
                         <i class="fas fa-save"></i> Salvar e Definir Próximo Contato
                     </button>
@@ -368,7 +404,8 @@
                 </div>
             </div>
 
-            <div class="w-2/3 pl-4 flex flex-col h-full">
+            <!-- Coluna Direita: Linha do Tempo -->
+            <div class="w-1/2 pl-4 flex flex-col h-full">
                 <h3 class="text-lg font-bold mb-2">Histórico (Linha do Tempo)</h3>
                 <div id="timelineContainer" class="flex-1 overflow-y-auto bg-gray-50 p-4 border rounded"></div>
             </div>
@@ -402,7 +439,7 @@
         </div>
     </div>
 
-    <!-- Lógica e Conexão Firebase Otimizada com Alertas de Prazo e Calculadora -->
+    <!-- Lógica e Conexão Firebase -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyC69ynCbWuJmE4JmstjPdpMSdWlSOU1hPM",
@@ -427,14 +464,12 @@
         let confirmCallbackFn = null;
         let cancelCallbackFn = null;
 
-        // Atualização automática a cada 30 segundos para disparar alertas de tempo real
         setInterval(() => {
             if(document.getElementById('appScreen').style.display !== 'none') {
                 renderPanels();
             }
         }, 30000);
 
-        // Função utilitária para formatar a data americana (AAAA-MM-DD) para o padrão brasileiro (DD/MM/AAAA)
         function formatDateBR(dateStr) {
             if (!dateStr) return "";
             const parts = dateStr.split('-');
@@ -444,18 +479,12 @@
             return dateStr;
         }
 
-        // Funções da Calculadora de Negociação
-        function openCalculatorModal() {
-            openModal('calculatorModal');
-        }
-
+        // Funções da Calculadora Integrada
         function calculateBloco1() {
             const total = parseFloat(document.getElementById('calcAtrasadoTotal').value) || 0;
             const desc = parseFloat(document.getElementById('calcDescontoPercent').value) || 0;
-            
             const valDesconto = total * (desc / 100);
             const valComDesconto = total - valDesconto;
-
             document.getElementById('calcValorDesconto').value = valDesconto.toFixed(2);
             document.getElementById('calcValorComDesconto').value = valComDesconto.toFixed(2);
         }
@@ -463,23 +492,19 @@
         function calculateBloco2() {
             const parcelas = parseFloat(document.getElementById('calcNumParcelas').value) || 0;
             const valor = parseFloat(document.getElementById('calcValorParcela').value) || 0;
-            
             const total = parcelas * valor;
             document.getElementById('calcTotalPorVencer').value = total.toFixed(2);
         }
 
         let isCalculatingInterpolation = false;
-
         function calculateFromP() {
             if (isCalculatingInterpolation) return;
             isCalculatingInterpolation = true;
-
             const VI = parseFloat(document.getElementById('calcVI').value);
             const PI = parseFloat(document.getElementById('calcPI').value);
             const VF = parseFloat(document.getElementById('calcVF').value);
             const PF = parseFloat(document.getElementById('calcPF').value);
             const Pmed = parseFloat(document.getElementById('calcPMed').value);
-
             if (!isNaN(VI) && !isNaN(PI) && !isNaN(VF) && !isNaN(PF) && !isNaN(Pmed) && (PF !== PI)) {
                 const Vmed = VI + (VF - VI) * ((Pmed - PI) / (PF - PI));
                 document.getElementById('calcVMed').value = Vmed.toFixed(2);
@@ -492,13 +517,11 @@
         function calculateFromV() {
             if (isCalculatingInterpolation) return;
             isCalculatingInterpolation = true;
-
             const VI = parseFloat(document.getElementById('calcVI').value);
             const PI = parseFloat(document.getElementById('calcPI').value);
             const VF = parseFloat(document.getElementById('calcVF').value);
             const PF = parseFloat(document.getElementById('calcPF').value);
             const Vmed = parseFloat(document.getElementById('calcVMed').value);
-
             if (!isNaN(VI) && !isNaN(PI) && !isNaN(VF) && !isNaN(PF) && !isNaN(Vmed) && (VF !== VI)) {
                 const Pmed = PI + (PF - PI) * ((Vmed - VI) / (VF - VI));
                 document.getElementById('calcPMed').value = Pmed.toFixed(2);
@@ -509,10 +532,49 @@
         }
 
         function calculateInterpolation() {
-            const pMedVal = document.getElementById('calcPMed').value;
-            if (pMedVal !== '') {
-                calculateFromP();
+            if (document.getElementById('calcPMed').value !== '') calculateFromP();
+        }
+
+        // Gerador de Confissão de Dívida e Proposta Completa
+        function generateConfissaoDivida() {
+            const neg = db.find(n => n.id === currentNegotiationId);
+            const clientName = neg ? neg.clientName : "Cliente";
+            const clientCpf = neg ? (neg.cpf || "Não informado") : "Não informado";
+            
+            let tipoAcordo = "Reparcelamento";
+            const radios = document.getElementsByName('agreementType');
+            for (let r of radios) {
+                if (r.checked) tipoAcordo = r.value;
             }
+
+            const atrasado = document.getElementById('propAtrasadoQtd').value || "Não informado";
+            const futuro = document.getElementById('propFuturoQtd').value || "Não informado";
+            const novoQtd = document.getElementById('propNovoQtd').value || "0";
+            const novoValor = document.getElementById('propNovoValor').value || "0.00";
+            const vencimento = formatDateBR(document.getElementById('propVencimento').value) || "A combinar";
+            const desconto = document.getElementById('propDesconto').value || "Nenhum";
+            const renegociarFuturo = document.getElementById('propRenegociarFuturo').value;
+            const accepted = document.getElementById('propAcceptedCheck').checked;
+
+            const aceiteStatus = accepted ? "✅ *ACORDO ACEITO E CONFIRMADO PELO CLIENTE*" : "⏳ *Aguardando Confirmação e Aceite*";
+
+            const termo = `*TERMO DE CONFISSÃO E RECONHECIMENTO DE DÍVIDA - ESCOLA INSTRUCTIVA*\n\n` +
+                          `Pelo presente instrumento, o(a) Sr(a). *${clientName}*, CPF: *${clientCpf}*, reconhece e confessa a dívida pendente com a Escola Instructiva, nos seguintes termos:\n\n` +
+                          `1. *SITUAÇÃO ANTERIOR DA DÍVIDA:*\n` +
+                          `• Parcelas em Atraso: ${atrasado}\n` +
+                          `• Parcelas Futuras (A Vencer): ${futuro}\n\n` +
+                          `2. *NOVA CONDIÇÃO ACORDADA (${tipoAcordo.toUpperCase()}):*\n` +
+                          `• Quantidade de Novas Parcelas: ${novoQtd}x\n` +
+                          `• Valor de Cada Parcela: R$ ${novoValor}\n` +
+                          `• Vencimento Base / Inicial: ${vencimento}\n` +
+                          `• Desconto Aplicado: ${desconto}\n` +
+                          `• Renegociação de Valores Futuros: ${renegociarFuturo}\n\n` +
+                          `3. *STATUS DO ACORDO:*\n` +
+                          `${aceiteStatus}\n\n` +
+                          `Respeitosamente,\n*Escola Instructiva*`;
+
+            document.getElementById('propTermText').value = termo;
+            document.getElementById('whatsappMessageInput').value = termo;
         }
 
         function showCustomAlert(title, message) {
@@ -528,16 +590,10 @@
         function showCustomConfirm(title, message, btnConfirmText, btnCancelText, onConfirm, onCancel) {
             document.getElementById('customConfirmTitle').innerText = title;
             document.getElementById('customConfirmMessage').innerText = message;
-            
-            const btnConfirm = document.getElementById('customConfirmBtnConfirm');
-            const btnCancel = document.getElementById('customConfirmBtnCancel');
-            
-            btnConfirm.innerText = btnConfirmText;
-            btnCancel.innerText = btnCancelText;
-            
+            document.getElementById('customConfirmBtnConfirm').innerText = btnConfirmText;
+            document.getElementById('customConfirmBtnCancel').innerText = btnCancelText;
             confirmCallbackFn = onConfirm;
             cancelCallbackFn = onCancel;
-            
             document.getElementById('customConfirmModal').style.display = 'flex';
         }
 
@@ -551,9 +607,7 @@
             if (cancelCallbackFn) cancelCallbackFn();
         };
 
-        window.onload = function() {
-            startDatabase();
-        };
+        window.onload = function() { startDatabase(); };
 
         function startDatabase() {
             operatorsRef = database.ref('crm_operators');
@@ -561,7 +615,6 @@
                 const data = snapshot.val();
                 operatorsList = data ? data : [];
                 updateOperatorDropdown();
-                
                 if (operator && operatorsList.includes(operator)) {
                     startApp(operator);
                 } else {
@@ -573,9 +626,7 @@
         function updateOperatorDropdown() {
             const selectLogin = document.getElementById('operatorSelect');
             let optionsHTML = '<option value="">Selecione...</option>';
-            operatorsList.forEach(op => {
-                optionsHTML += `<option value="${op}">${op}</option>`;
-            });
+            operatorsList.forEach(op => { optionsHTML += `<option value="${op}">${op}</option>`; });
             selectLogin.innerHTML = optionsHTML;
             if (operator) selectLogin.value = operator;
         }
@@ -596,22 +647,14 @@
             let name = "";
             const selectVal = document.getElementById('operatorSelect').value.trim();
             const inputVal = document.getElementById('newOperatorNameInput').value.trim();
-
             if (inputVal) {
                 name = inputVal;
                 if (!operatorsList.includes(name)) {
                     operatorsList.push(name);
                     operatorsRef.set(operatorsList);
                 }
-            } else if (selectVal) {
-                name = selectVal;
-            }
-
-            if (!name) { 
-                showCustomAlert("Identificação Necessária", "Selecione ou digite o nome do operador para entrar!"); 
-                return; 
-            }
-
+            } else if (selectVal) { name = selectVal; }
+            if (!name) { showCustomAlert("Identificação Necessária", "Selecione ou digite o nome do operador para entrar!"); return; }
             localStorage.setItem('crm_operator', name);
             startApp(name);
         }
@@ -626,13 +669,11 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('appScreen').style.display = 'block';
             document.getElementById('operatorNameDisplay').innerText = operator;
-            
             dbRef = database.ref('crm_data');
             dbRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 db = data ? data : []; 
                 renderPanels();
-
                 if (currentNegotiationId) {
                     const neg = db.find(n => n.id === currentNegotiationId);
                     if (neg) {
@@ -644,9 +685,7 @@
                         document.getElementById('detailStatusBadge').innerText = neg.status;
                         document.getElementById('detailResponsible').innerText = neg.responsible || 'Sem responsável';
                         document.getElementById('detailFailedAttempts').innerText = neg.failedAttempts || 0;
-                    } else {
-                        closeModal('detailsModal');
-                    }
+                    } else { closeModal('detailsModal'); }
                 }
             });
         }
@@ -668,24 +707,11 @@
             return str.replace(/\D/g, "");
         }
 
-        function validateCpf(cpf) {
-            const clean = cleanNumbers(cpf);
-            return clean.length === 11;
-        }
+        function validateCpf(cpf) { return cleanNumbers(cpf).length === 11; }
+        function validatePhone(phone) { const c = cleanNumbers(phone); return c.length === 10 || c.length === 11; }
+        function validateEmail(email) { return email.includes('@') && email.includes('.'); }
 
-        function validatePhone(phone) {
-            const clean = cleanNumbers(phone);
-            return clean.length === 10 || clean.length === 11;
-        }
-
-        function validateEmail(email) {
-            return email.includes('@') && email.includes('.');
-        }
-
-        function openImportModal() {
-            document.getElementById('csvFileInput').value = "";
-            openModal('importModal');
-        }
+        function openImportModal() { document.getElementById('csvFileInput').value = ""; openModal('importModal'); }
 
         function downloadCSVTemplate() {
             const csv = "Nome,CPF,Telefone,Email\n";
@@ -693,107 +719,60 @@
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
             link.setAttribute("download", "Modelo_Importacao_CRM.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
         function processCSVImport() {
             const fileInput = document.getElementById('csvFileInput');
-            if (!fileInput.files.length) {
-                showCustomAlert("Atenção", "Por favor, selecione um arquivo CSV do seu computador para importar.");
-                return;
-            }
-
+            if (!fileInput.files.length) { showCustomAlert("Atenção", "Selecione um arquivo CSV."); return; }
             const file = fileInput.files[0];
             const reader = new FileReader();
-
             reader.onload = function(e) {
                 const text = e.target.result;
                 const rows = text.split('\n');
-                let added = 0;
-                let ignored = 0;
-
+                let added = 0, ignored = 0;
                 for(let i = 1; i < rows.length; i++) {
                     const row = rows[i].trim();
                     if(!row) continue;
-                    
                     const cols = row.split(','); 
                     if(cols.length < 1) continue; 
-
                     const clientName = cols[0] ? cols[0].trim() : "";
                     const cpf = cols[1] ? cleanNumbers(cols[1]) : "";
                     const tel = cols[2] ? cleanNumbers(cols[2]) : "";
                     const email = cols[3] ? cols[3].trim() : "";
-
-                    if (!clientName) { 
-                        ignored++; 
-                        continue; 
-                    }
-
+                    if (!clientName) { ignored++; continue; }
                     const exists = db.find(n => {
                         const dbCpf = cleanNumbers(n.cpf);
                         const dbTel = cleanNumbers(n.tel);
                         return (cpf && dbCpf && dbCpf === cpf) || (tel && dbTel && dbTel === tel);
                     });
-
-                    if (exists) {
-                        ignored++;
-                        continue;
-                    }
-
-                    const newNeg = {
-                        id: generateId(),
-                        clientName: clientName,
-                        cpf: cpf || "Não informado",
-                        tel: tel || "Não informado",
-                        email: email || "Não informado",
-                        responsible: "", 
-                        status: "Importado / Novo",
-                        returnDate: "",
-                        returnTime: "",
-                        allowTakeover: "Sim",
-                        failedAttempts: 0,
-                        observations: [],
-                        proposals: [],
-                        createdAt: getTimestamp(),
-                        timeline: [{
-                            date: getTimestamp(),
-                            operator: "Sistema Automático",
-                            action: "Importação em Lote",
-                            detail: "Ficha criada via importação CSV."
-                        }]
-                    };
-                    
-                    db.push(newNeg);
+                    if (exists) { ignored++; continue; }
+                    db.push({
+                        id: generateId(), clientName, cpf: cpf || "Não informado", tel: tel || "Não informado", email: email || "Não informado",
+                        responsible: "", status: "Importado / Novo", returnDate: "", returnTime: "", allowTakeover: "Sim", failedAttempts: 0,
+                        observations: [], proposals: [], isAccepted: false, createdAt: getTimestamp(),
+                        timeline: [{ date: getTimestamp(), operator: "Sistema Automático", action: "Importação em Lote", detail: "Ficha criada via importação CSV." }]
+                    });
                     added++;
                 }
-
-                if (added > 0) {
-                    saveData();
-                }
-                
-                showCustomAlert("Importação Concluída!", `Resumo do processo:\n\n✅ ${added} novos clientes cadastrados.\n⚠️ ${ignored} linhas ignoradas.`);
+                if (added > 0) saveData();
+                showCustomAlert("Importação Concluída!", `✅ ${added} novos clientes cadastrados.\n⚠️ ${ignored} linhas ignoradas.`);
                 closeModal('importModal');
                 switchTab('active');
             };
-
             reader.readAsText(file);
         }
 
         function toggleEditClient() {
             const box = document.getElementById('editClientBox');
-            const isHidden = box.classList.contains('hidden');
-            if (isHidden) {
+            if (box.classList.contains('hidden')) {
                 const neg = db.find(n => n.id === currentNegotiationId);
                 document.getElementById('editClientName').value = neg.clientName || '';
                 document.getElementById('editClientCpf').value = neg.cpf === 'Não informado' ? '' : neg.cpf;
                 document.getElementById('editClientTel').value = neg.tel === 'Não informado' ? '' : neg.tel;
                 document.getElementById('editClientEmail').value = neg.email === 'Não informado' ? '' : neg.email;
                 box.classList.remove('hidden');
-            } else {
-                box.classList.add('hidden');
-            }
+            } else { box.classList.add('hidden'); }
         }
 
         function saveClientEdits() {
@@ -802,88 +781,41 @@
             const newCpf = document.getElementById('editClientCpf').value.trim();
             const newTel = document.getElementById('editClientTel').value.trim();
             const newEmail = document.getElementById('editClientEmail').value.trim();
-
-            if (!newName) {
-                showCustomAlert("Campo Obrigatório", "O Nome do cliente é obrigatório!");
-                return;
-            }
-
-            if (newCpf && !validateCpf(newCpf)) {
-                showCustomAlert("CPF Inválido", "O CPF digitado é inválido. Ele deve conter 11 dígitos numéricos.");
-                return;
-            }
-
-            if (newTel && newTel !== "Não informado" && !validatePhone(newTel)) {
-                showCustomAlert("Telefone Inválido", "O número de telefone digitado é inválido.");
-                return;
-            }
-
-            if (newEmail && newEmail !== "Não informado" && !validateEmail(newEmail)) {
-                showCustomAlert("E-mail Inválido", "O endereço de e-mail digitado é inválido.");
-                return;
-            }
-
+            if (!newName) { showCustomAlert("Campo Obrigatório", "Nome obrigatório!"); return; }
+            if (newCpf && !validateCpf(newCpf)) { showCustomAlert("CPF Inválido", "CPF deve ter 11 dígitos."); return; }
             neg.clientName = newName;
             neg.cpf = newCpf || "Não informado";
             neg.tel = newTel || "Não informado";
             neg.email = newEmail || "Não informado";
-
-            neg.timeline.push({
-                date: getTimestamp(),
-                operator: operator,
-                action: "Edição de Dados",
-                detail: `Dados cadastrais atualizados por ${operator}`
-            });
-
+            neg.timeline.push({ date: getTimestamp(), operator: operator, action: "Edição de Dados", detail: `Atualizado por ${operator}` });
             saveData();
             toggleEditClient();
             openDetails(currentNegotiationId);
-            showCustomAlert("Sucesso", "Os dados do cliente foram atualizados com sucesso!");
+            showCustomAlert("Sucesso", "Dados atualizados com sucesso!");
         }
 
         function sendWhatsApp() {
             const neg = db.find(n => n.id === currentNegotiationId);
             if (!neg || !neg.tel || neg.tel === "Não informado") {
-                showCustomAlert("Atenção", "Este cliente não possui telefone cadastrado. Edite os dados para adicionar o número antes de enviar.");
+                showCustomAlert("Atenção", "Cliente sem telefone cadastrado.");
                 return;
             }
-
             let phoneClean = cleanNumbers(neg.tel);
-            if (!phoneClean.startsWith("55")) {
-                phoneClean = "55" + phoneClean;
-            }
-
+            if (!phoneClean.startsWith("55")) phoneClean = "55" + phoneClean;
             const msgText = document.getElementById('whatsappMessageInput').value.trim();
-            const encodedMessage = encodeURIComponent(msgText);
-
-            const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneClean}&text=${encodedMessage}`;
-            window.open(whatsappUrl, '_blank');
+            window.open(`https://api.whatsapp.com/send?phone=${phoneClean}&text=${encodeURIComponent(msgText)}`, '_blank');
         }
 
         function handleNameInput(val) {
             const box = document.getElementById('nameSuggestions');
             const cleanVal = normalizeText(val);
-
-            if (cleanVal.length < 2) {
-                box.innerHTML = '';
-                box.style.display = 'none';
-                return;
-            }
-
-            const existingNames = [...new Set(db.map(n => n.clientName))];
-            const matches = existingNames.filter(name => normalizeText(name).includes(cleanVal));
-
-            if (matches.length === 0) {
-                box.innerHTML = '';
-                box.style.display = 'none';
-                return;
-            }
-
+            if (cleanVal.length < 2) { box.innerHTML = ''; box.style.display = 'none'; return; }
+            const matches = [...new Set(db.map(n => n.clientName))].filter(name => normalizeText(name).includes(cleanVal));
+            if (matches.length === 0) { box.innerHTML = ''; box.style.display = 'none'; return; }
             let html = '';
             matches.forEach(name => {
                 html += `<div onclick="selectSuggestedName('${name.replace(/'/g, "\\'")}')" class="p-2 hover:bg-blue-100 cursor-pointer text-sm border-b">${name}</div>`;
             });
-
             box.innerHTML = html;
             box.style.display = 'block';
         }
@@ -898,7 +830,6 @@
             const historyPanel = document.getElementById('historyPanel');
             const btnActive = document.getElementById('btnTabActive');
             const btnHistory = document.getElementById('btnTabHistory');
-
             if(tab === 'active') {
                 activePanel.style.display = 'grid';
                 historyPanel.style.display = 'none';
@@ -913,49 +844,27 @@
             renderPanels();
         }
 
-        function renderPanels() {
-            renderActive();
-            renderHistory();
-        }
+        function renderPanels() { renderActive(); renderHistory(); }
 
         function renderActive() {
             const panel = document.getElementById('activePanel');
             const searchTerm = normalizeText(document.getElementById('searchInput').value);
-            
             const ativas = db.filter(n => {
                 if (n.status === "Concluído" || n.status === "Não Atendido" || n.status === "Ligar Novamente") return false;
                 if (!searchTerm) return true;
-                
                 const normName = normalizeText(n.clientName);
-                const normCpf = cleanNumbers(n.cpf);
-                const normTel = cleanNumbers(n.tel);
-                const normEmail = normalizeText(n.email);
                 const searchClean = cleanNumbers(document.getElementById('searchInput').value);
-
-                return normName.includes(searchTerm) || 
-                       (searchClean && normCpf.includes(searchClean)) || 
-                       (searchClean && normTel.includes(searchClean)) || 
-                       normEmail.includes(searchTerm);
+                return normName.includes(searchTerm) || (searchClean && cleanNumbers(n.cpf).includes(searchClean)) || (searchClean && cleanNumbers(n.tel).includes(searchClean));
             });
 
             ativas.sort((a, b) => {
                 const hasReturnA = (a.returnDate && a.returnTime);
                 const hasReturnB = (b.returnDate && b.returnTime);
-
                 if (hasReturnA && !hasReturnB) return -1;
                 if (!hasReturnA && hasReturnB) return 1;
-
                 if (hasReturnA && hasReturnB) {
-                    const dateTimeA = new Date(`${a.returnDate}T${a.returnTime || '00:00'}`);
-                    const dateTimeB = new Date(`${b.returnDate}T${b.returnTime || '00:00'}`);
-                    return dateTimeA - dateTimeB; 
+                    return new Date(`${a.returnDate}T${a.returnTime || '00:00'}`) - new Date(`${b.returnDate}T${b.returnTime || '00:00'}`);
                 }
-
-                const isImportedA = (a.responsible === "" || a.status === "Importado / Novo");
-                const isImportedB = (b.responsible === "" || b.status === "Importado / Novo");
-                if (isImportedA && !isImportedB) return -1;
-                if (!isImportedA && isImportedB) return 1;
-
                 return 0;
             });
 
@@ -966,7 +875,6 @@
 
             let htmlContent = "";
             const now = new Date();
-
             ativas.forEach(n => {
                 const canTakeover = n.allowTakeover === "Sim" || n.responsible === "";
                 const isMine = n.responsible === operator;
@@ -975,18 +883,12 @@
 
                 let cardClass = "bg-white rounded-lg shadow border p-4 flex flex-col justify-between";
                 let alertBadge = "";
-                let isOverdue = false;
-                let isUrgent = false;
+                let isOverdue = false, isUrgent = false;
 
                 if (hasScheduledReturn) {
-                    const returnDateTime = new Date(`${n.returnDate}T${n.returnTime}`);
-                    const diffMs = returnDateTime - now;
-
-                    if (diffMs < 0) {
-                        isOverdue = true;
-                    } else if (diffMs <= 20 * 60 * 1000) {
-                        isUrgent = true;
-                    }
+                    const diffMs = new Date(`${n.returnDate}T${n.returnTime}`) - now;
+                    if (diffMs < 0) isOverdue = true;
+                    else if (diffMs <= 20 * 60 * 1000) isUrgent = true;
                 }
 
                 if (isOverdue) {
@@ -995,54 +897,29 @@
                 } else if (isUrgent) {
                     cardClass = "bg-orange-50 rounded-lg shadow-md border-l-4 border-l-orange-600 p-4 flex flex-col justify-between border-t border-r border-b border-orange-200";
                     alertBadge = `<div class="mb-2"><span class="animate-pulse bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-bell"></i> ⏰ LIGAR EM MENOS DE 20 MIN</span></div>`;
-                } else if (hasScheduledReturn) {
-                    cardClass = "bg-red-50 rounded-lg shadow-md border-l-4 border-l-red-600 p-4 flex flex-col justify-between border-t border-r border-b border-red-200";
-                    alertBadge = `<div class="mb-2"><span class="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-calendar-check"></i> ⏰ HORA DO RETORNO PROGRAMADO</span></div>`;
                 } else if (isImportedUnassigned) {
                     cardClass = "bg-purple-50 rounded-lg shadow-md border-l-4 border-l-purple-600 p-4 flex flex-col justify-between border-t border-r border-b border-purple-200";
                     alertBadge = `<div class="mb-2"><span class="animate-pulse bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-exclamation-triangle"></i> 🚨 NOVO - NUNCA CONTACTADO</span></div>`;
                 }
 
-                let takeoverHTML = canTakeover && !isImportedUnassigned ? `<div class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 mb-2 rounded border border-green-300 inline-block"><i class="fas fa-unlock"></i> Livre para assumir</div>` : '';
+                let btnAcaoHTML = isMine ? `<button onclick="openDetails('${n.id}')" class="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 shadow font-bold">Abrir Negociação</button>` :
+                                  canTakeover ? `<button onclick="takeover('${n.id}')" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded text-sm font-bold shadow">Assumir Contato</button>` :
+                                  `<button disabled class="w-full bg-gray-300 text-gray-500 py-2 rounded text-sm cursor-not-allowed">Restrito a ${n.responsible}</button>`;
+
+                let returnInfo = hasScheduledReturn ? `<div class="bg-white p-2 rounded border border-red-300 my-2 text-center shadow-inner"><p class="text-xs text-red-600 font-bold uppercase"><i class="fas fa-calendar-alt"></i> Próximo Retorno:</p><p class="text-base text-red-700 font-extrabold">${formatDateBR(n.returnDate)} às ${n.returnTime}</p></div>` : `<p class="text-xs text-blue-600 font-bold my-2"><i class="fas fa-clock"></i> Sem retorno agendado</p>`;
                 
-                let btnAcaoHTML = "";
-                if(isMine) {
-                    btnAcaoHTML = `<button onclick="openDetails('${n.id}')" class="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 shadow font-bold">Abrir Negociação</button>`;
-                } else if(canTakeover) {
-                    btnAcaoHTML = `<button onclick="takeover('${n.id}')" class="w-full ${isImportedUnassigned ? 'bg-purple-600 hover:bg-purple-700' : 'bg-yellow-500 hover:bg-yellow-600'} text-white py-2 rounded text-sm font-bold shadow">Assumir Contato</button>`;
-                } else {
-                    btnAcaoHTML = `<button disabled class="w-full bg-gray-300 text-gray-500 py-2 rounded text-sm cursor-not-allowed">Restrito a ${n.responsible}</button>`;
-                }
-
-                let returnInfo = "";
-                if (hasScheduledReturn) {
-                    const formattedDateBR = formatDateBR(n.returnDate);
-                    const timeColorClass = isOverdue ? 'text-red-800 font-extrabold' : (isUrgent ? 'text-orange-700 font-extrabold' : 'text-red-700 font-extrabold');
-                    returnInfo = `<div class="bg-white p-2 rounded border ${isOverdue ? 'border-red-600 bg-red-50' : 'border-red-300'} my-2 text-center shadow-inner"><p class="text-xs ${isOverdue ? 'text-red-800' : 'text-red-600'} font-bold uppercase"><i class="fas fa-calendar-alt"></i> Próximo Retorno:</p><p class="text-base ${timeColorClass}">${formattedDateBR} às ${n.returnTime}</p></div>`;
-                } else {
-                    returnInfo = `<p class="text-xs text-blue-600 font-bold my-2"><i class="fas fa-clock"></i> Sem retorno agendado</p>`;
-                }
-
-                const lastObs = (n.observations && n.observations.length > 0) ? n.observations[n.observations.length - 1] : "Nenhuma observação registrada.";
-                const lastProp = (n.proposals && n.proposals.length > 0) ? n.proposals[n.proposals.length - 1] : "Nenhuma proposta registrada.";
+                let lastObs = (n.observations && n.observations.length > 0) ? n.observations[n.observations.length - 1] : "Nenhuma obs.";
 
                 htmlContent += `
                     <div class="${cardClass}">
                         <div>
                             ${alertBadge}
                             <h3 class="font-bold text-lg leading-tight mb-1">${n.clientName}</h3>
-                            ${takeoverHTML}
-                            <div class="text-xs text-gray-600 mb-2 border-b pb-2 border-gray-200">CPF: ${n.cpf || '-'} | Tel: ${n.tel || '-'}</div>
+                            <div class="text-xs text-gray-600 mb-2 border-b pb-2">CPF: ${n.cpf || '-'} | Tel: ${n.tel || '-'}</div>
                             <p class="text-xs mb-1"><strong>Status:</strong> <span class="text-blue-700 font-bold">${n.status}</span></p>
-                            <p class="text-xs mb-1"><strong>Resp:</strong> ${n.responsible || '<span class="text-purple-600 font-bold">Aguardando Operador</span>'}</p>
-                            <p class="text-xs mb-1"><strong>Falhas:</strong> ${n.failedAttempts || 0}</p>
-                            
+                            <p class="text-xs mb-1"><strong>Resp:</strong> ${n.responsible || 'Aguardando'}</p>
                             ${returnInfo}
-
-                            <div class="bg-gray-50 p-2 rounded text-[11px] text-gray-700 mt-2 space-y-1 border">
-                                <p><strong>Obs:</strong> ${lastObs}</p>
-                                <p><strong>Proposta:</strong> ${lastProp}</p>
-                            </div>
+                            <div class="bg-gray-50 p-2 rounded text-[11px] text-gray-700 mt-2 border"><strong>Última Obs:</strong> ${lastObs}</div>
                         </div>
                         <div class="mt-4">${btnAcaoHTML}</div>
                     </div>
@@ -1054,45 +931,23 @@
         function renderHistory() {
             const list = document.getElementById('historyList');
             const searchTerm = normalizeText(document.getElementById('searchInput').value);
-            
             const inativas = db.filter(n => {
                 if (n.status !== "Concluído" && n.status !== "Não Atendido" && n.status !== "Ligar Novamente") return false;
                 if (!searchTerm) return true;
-
-                const normName = normalizeText(n.clientName);
-                const normCpf = cleanNumbers(n.cpf);
-                const normTel = cleanNumbers(n.tel);
-                const normEmail = normalizeText(n.email);
-                const searchClean = cleanNumbers(document.getElementById('searchInput').value);
-
-                return normName.includes(searchTerm) || 
-                       (searchClean && normCpf.includes(searchClean)) || 
-                       (searchClean && normTel.includes(searchClean)) || 
-                       normEmail.includes(searchTerm);
+                return normalizeText(n.clientName).includes(searchTerm);
             });
 
-            if(inativas.length === 0) {
-                list.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum cliente inativo encontrado.</p>`;
-                return;
-            }
-
+            if(inativas.length === 0) { list.innerHTML = `<p class="text-center text-gray-500 py-4">Nenhum cliente inativo encontrado.</p>`; return; }
             let htmlContent = "";
             inativas.forEach(n => {
-                let badgeClass = "bg-gray-200 text-gray-800 border-gray-400";
-                if (n.status === "Não Atendido") badgeClass = "bg-red-100 text-red-800 border-red-300";
-                if (n.status === "Ligar Novamente") badgeClass = "bg-orange-100 text-orange-800 border-orange-300";
-
                 htmlContent += `
-                    <div class="border p-4 rounded flex flex-col md:flex-row justify-between items-center bg-gray-50 hover:bg-gray-100 gap-4">
-                        <div class="w-full md:w-auto">
+                    <div class="border p-4 rounded flex flex-col md:flex-row justify-between items-center bg-gray-50 gap-4">
+                        <div>
                             <h4 class="font-bold text-lg">${n.clientName}</h4>
                             <div class="text-xs text-gray-600 mb-1">CPF: ${n.cpf || '-'} | Tel: ${n.tel || '-'}</div>
-                            <span class="text-[10px] px-2 py-1 border rounded font-bold ${badgeClass}">${n.status}</span>
-                            <span class="text-xs text-gray-500 ml-2">Resp: ${n.responsible}</span>
+                            <span class="text-[10px] px-2 py-1 border rounded font-bold bg-gray-200">${n.status}</span>
                         </div>
-                        <div class="w-full md:w-auto">
-                            <button onclick="openDetails('${n.id}')" class="w-full md:w-auto bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold shadow hover:bg-gray-900">Ver Histórico</button>
-                        </div>
+                        <button onclick="openDetails('${n.id}')" class="bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold shadow">Ver Histórico</button>
                     </div>
                 `;
             });
@@ -1104,58 +959,22 @@
             document.getElementById('duplicateResultArea').innerHTML = "";
             document.getElementById('stepFillData').style.display = 'none';
             document.getElementById('btnCancelStep1').style.display = 'flex';
-            document.getElementById('nameSuggestions').style.display = 'none';
             openModal('newNegotiationModal');
         }
 
         function checkDuplicate() {
             const rawTerm = document.getElementById('duplicateSearchInput').value.trim();
             const resultArea = document.getElementById('duplicateResultArea');
-            
-            if(rawTerm.length < 2) {
-                resultArea.innerHTML = `<p class="text-red-600 text-sm">Digite ao menos 2 caracteres para buscar.</p>`;
-                return;
-            }
-
-            const termCleanNumbers = cleanNumbers(rawTerm);
-            const termNormText = normalizeText(rawTerm);
-
-            const found = db.find(n => {
-                const dbCpf = cleanNumbers(n.cpf);
-                const dbTel = cleanNumbers(n.tel);
-                const dbEmail = normalizeText(n.email);
-                const dbName = normalizeText(n.clientName);
-
-                return (termCleanNumbers && termCleanNumbers.length >= 3 && (dbCpf.includes(termCleanNumbers) || dbTel.includes(termCleanNumbers))) ||
-                       (dbEmail === termNormText) ||
-                       (dbName.includes(termNormText));
-            });
-            
+            if(rawTerm.length < 2) { resultArea.innerHTML = `<p class="text-red-600 text-sm">Digite ao menos 2 caracteres.</p>`; return; }
+            const found = db.find(n => cleanNumbers(n.cpf).includes(cleanNumbers(rawTerm)) || normalizeText(n.clientName).includes(normalizeText(rawTerm)));
             if(found) {
-                resultArea.innerHTML = `
-                    <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 p-3 rounded">
-                        <p class="font-bold mb-2"><i class="fas fa-exclamation-triangle"></i> Possível duplicidade encontrada!</p>
-                        <p class="text-sm mb-2">Nome: <strong>${found.clientName}</strong> | CPF: ${found.cpf || '-'} | Status: ${found.status}</p>
-                        <button onclick="openDetailsFromSearch('${found.id}')" class="bg-yellow-600 text-white px-4 py-1 rounded text-sm hover:bg-yellow-700">Abrir Cadastro Existente</button>
-                    </div>`;
+                resultArea.innerHTML = `<div class="bg-yellow-100 border p-3 rounded"><p class="font-bold">Possível duplicidade: ${found.clientName}</p><button onclick="openDetails('${found.id}'); closeModal('newNegotiationModal');" class="bg-yellow-600 text-white px-3 py-1 rounded text-sm mt-1">Abrir Cadastro</button></div>`;
                 document.getElementById('stepFillData').style.display = 'none';
-                document.getElementById('btnCancelStep1').style.display = 'flex';
             } else {
-                resultArea.innerHTML = `<p class="text-green-600 text-sm font-bold"><i class="fas fa-check"></i> Nenhum cadastro conflitante encontrado. Preencha os dados abaixo:</p>`;
-                
-                if(termCleanNumbers.length === 11) document.getElementById('newCpf').value = rawTerm;
-                else if(rawTerm.includes('@')) document.getElementById('newEmail').value = rawTerm;
-                else if(termCleanNumbers.length >= 10) document.getElementById('newTel').value = rawTerm;
-                else document.getElementById('newClientName').value = rawTerm;
-
+                resultArea.innerHTML = `<p class="text-green-600 text-sm font-bold">Nenhum conflito. Preencha abaixo:</p>`;
                 document.getElementById('stepFillData').style.display = 'block';
                 document.getElementById('btnCancelStep1').style.display = 'none';
             }
-        }
-
-        function openDetailsFromSearch(id) {
-            closeModal('newNegotiationModal');
-            openDetails(id);
         }
 
         function createNegotiation() {
@@ -1163,73 +982,28 @@
             const cpf = document.getElementById('newCpf').value.trim();
             const tel = document.getElementById('newTel').value.trim();
             const email = document.getElementById('newEmail').value.trim();
-            const allowTakeover = document.getElementById('newAllowTakeover').value;
-            const obs = document.getElementById('newObservation').value.trim();
-
-            if(!clientName || !tel || !email) { 
-                showCustomAlert("Campos Incompletos", "Os campos Nome, Telefone e E-mail são obrigatórios para realizar o cadastro!"); 
-                return; 
-            }
-
-            if(cpf && !validateCpf(cpf)) {
-                showCustomAlert("CPF Inválido", "O CPF digitado é inválido! Certifique-se de digitar os 11 números corretos.");
-                return;
-            }
-
-            if(!validatePhone(tel)) {
-                showCustomAlert("Telefone Inválido", "Telefone inválido! Informe o DDD seguido do número corretamente.");
-                return;
-            }
-
-            if(!validateEmail(email)) {
-                showCustomAlert("E-mail Inválido", "O e-mail preenchido não é um formato válido. Verifique se possui '@' e '.com'");
-                return;
-            }
-
+            if(!clientName || !tel || !email) { showCustomAlert("Erro", "Nome, Telefone e E-mail são obrigatórios!"); return; }
             const newId = generateId();
-            const newNeg = {
-                id: newId,
-                clientName, cpf, tel, email,
-                responsible: operator,
-                status: "Em Atendimento / Novo", 
-                returnDate: "", 
-                returnTime: "",
-                allowTakeover, 
-                failedAttempts: 0,
-                observations: obs ? [obs] : [],
-                proposals: [],
-                createdAt: getTimestamp(), timeline: []
-            };
-
-            newNeg.timeline.push({
-                date: getTimestamp(), operator: operator,
-                action: "Criação do Cadastro", detail: `Cadastrado por ${operator}` + (obs ? ` | Obs: ${obs}` : "")
+            db.push({
+                id: newId, clientName, cpf: cpf || "Não informado", tel: tel || "Não informado", email: email || "Não informado",
+                responsible: operator, status: "Em Atendimento / Novo", returnDate: "", returnTime: "", allowTakeover: document.getElementById('newAllowTakeover').value,
+                failedAttempts: 0, observations: [], proposals: [], isAccepted: false, createdAt: getTimestamp(),
+                timeline: [{ date: getTimestamp(), operator: operator, action: "Criação do Cadastro", detail: `Cadastrado por ${operator}` }]
             });
-
-            db.push(newNeg);
             saveData(); 
             closeModal('newNegotiationModal');
-            
-            document.getElementById('newClientName').value = ""; document.getElementById('newCpf').value = "";
-            document.getElementById('newTel').value = ""; document.getElementById('newEmail').value = "";
-            document.getElementById('newObservation').value = "";
-            
             openDetails(newId);
         }
 
         function toggleReturnDate(selectId, dateDivId) {
             const val = document.getElementById(selectId).value;
-            const isConcluido = (val === 'Concluído' || val === 'Não Atendido' || val === 'Ligar Novamente');
-            document.getElementById(dateDivId).style.display = isConcluido ? 'none' : 'block';
+            document.getElementById(dateDivId).style.display = (['Concluído', 'Não Atendido', 'Ligar Novamente'].includes(val)) ? 'none' : 'block';
         }
 
         function takeover(id) {
             const neg = db.find(n => n.id === id);
             neg.responsible = operator;
-            neg.timeline.push({
-                date: getTimestamp(), operator: operator,
-                action: "Assumiu Atendimento", detail: `Contato assumido por ${operator}`
-            });
+            neg.timeline.push({ date: getTimestamp(), operator: operator, action: "Assumiu Atendimento", detail: `Assumido por ${operator}` });
             saveData();
             openDetails(id);
         }
@@ -1237,12 +1011,8 @@
         function openDetails(id) {
             currentNegotiationId = id;
             const neg = db.find(n => n.id === id);
-            
             neg.responsible = operator;
-            
-            if (neg.status === "Importado / Novo") {
-                neg.status = "Em Atendimento / Novo";
-            }
+            if (neg.status === "Importado / Novo") neg.status = "Em Atendimento / Novo";
             saveData();
 
             document.getElementById('detailClientName').innerText = neg.clientName;
@@ -1252,29 +1022,26 @@
             document.getElementById('detailResponsible').innerText = neg.responsible;
             document.getElementById('detailStatusBadge').innerText = neg.status;
             document.getElementById('detailFailedAttempts').innerText = neg.failedAttempts || 0;
-            
             document.getElementById('editClientBox').classList.add('hidden');
 
-            const isInactive = (neg.status === "Concluído" || neg.status === "Não Atendido" || neg.status === "Ligar Novamente");
-            document.getElementById('actionForms').style.display = isInactive ? 'none' : 'block';
-            document.getElementById('resumeArea').style.display = isInactive ? 'block' : 'none';
+            // Carregar dados salvos da proposta/confissão
+            document.getElementById('propAtrasadoQtd').value = neg.propAtrasadoQtd || "";
+            document.getElementById('propFuturoQtd').value = neg.propFuturoQtd || "";
+            document.getElementById('propNovoQtd').value = neg.propNovoQtd || "";
+            document.getElementById('propNovoValor').value = neg.propNovoValor || "";
+            document.getElementById('propVencimento').value = neg.propVencimento || "";
+            document.getElementById('propDesconto').value = neg.propDesconto || "";
+            document.getElementById('propRenegociarFuturo').value = neg.propRenegociarFuturo || "Não";
+            document.getElementById('propAcceptedCheck').checked = neg.isAccepted || false;
 
-            if(!isInactive) {
-                document.getElementById('actionStatus').value = (neg.status === "Em Atendimento / Novo" || neg.status === "Em negociação") ? "Retornar Dia" : neg.status;
-                toggleReturnDate('actionStatus', 'actionReturnDateDiv');
-                if(neg.returnDate) document.getElementById('actionReturnDate').value = neg.returnDate;
-                if(neg.returnTime) document.getElementById('actionReturnTime').value = neg.returnTime;
+            if (neg.propType) {
+                const radios = document.getElementsByName('agreementType');
+                for (let r of radios) {
+                    if (r.value === neg.propType) r.checked = true;
+                }
             }
 
-            const lastObs = (neg.observations && neg.observations.length > 0) ? neg.observations[neg.observations.length - 1] : "";
-            const lastProp = (neg.proposals && neg.proposals.length > 0) ? neg.proposals[neg.proposals.length - 1] : "";
-
-            document.getElementById('checkMissedCall').checked = false;
-            document.getElementById('actionObservation').value = lastObs;
-            document.getElementById('actionProposal').value = lastProp;
-            
-            document.getElementById('whatsappMessageInput').value = `Olá, Sr(a). ${neg.clientName}. Tudo bem? Aqui é ${operator}, da Escola Instructiva. Gostaria muito de falar com o(a) senhor(a). Podemos conversar um minutinho?`;
-
+            generateConfissaoDivida();
             renderTimeline(neg);
             openModal('detailsModal');
         }
@@ -1283,22 +1050,11 @@
             const container = document.getElementById('timelineContainer');
             container.innerHTML = "";
             if(!neg.timeline) return;
-
             let htmlContent = "";
             neg.timeline.slice().reverse().forEach(t => {
-                let icon = "fa-info-circle text-blue-500";
-                if(t.action.includes("Criação")) icon = "fa-star text-yellow-500";
-                if(t.action.includes("Importação")) icon = "fa-file-import text-purple-600";
-                if(t.action.includes("Proposta")) icon = "fa-handshake text-green-500";
-                if(t.action.includes("Conclusão")) icon = "fa-check-circle text-gray-800";
-                if(t.action.includes("Retomada")) icon = "fa-redo text-yellow-600";
-                if(t.action.includes("Não Atendido")) icon = "fa-phone-slash text-red-500";
-                if(t.action.includes("Assumiu")) icon = "fa-user-check text-green-600";
-                if(t.action.includes("Edição")) icon = "fa-user-edit text-blue-600";
-
                 htmlContent += `
                     <div class="mb-4 border-l-2 border-gray-300 pl-4 relative">
-                        <i class="fas ${icon} absolute -left-[9px] top-1 bg-gray-50 text-lg"></i>
+                        <i class="fas fa-info-circle absolute -left-[9px] top-1 bg-gray-50 text-blue-500"></i>
                         <p class="text-xs text-gray-500">${t.date} - <strong>${t.operator}</strong></p>
                         <p class="text-sm font-bold mt-1">${t.action}</p>
                         <p class="text-sm text-gray-700 bg-white p-2 border rounded mt-1">${t.detail}</p>
@@ -1310,201 +1066,78 @@
 
         function saveUnifiedUpdates() {
             const neg = db.find(n => n.id === currentNegotiationId);
-            let newStatus = document.getElementById('actionStatus').value;
+            const newStatus = document.getElementById('actionStatus').value;
             const returnDate = document.getElementById('actionReturnDate').value;
             const returnTime = document.getElementById('actionReturnTime').value;
             const missedCallChecked = document.getElementById('checkMissedCall').checked;
             const observationText = document.getElementById('actionObservation').value.trim();
-            const proposalText = document.getElementById('actionProposal').value.trim();
+            const isAcceptedNow = document.getElementById('propAcceptedCheck').checked;
 
-            let willArchive = (newStatus === "Concluído" || newStatus === "Não Atendido" || newStatus === "Ligar Novamente");
+            // Salvar campos da confissão de dívida
+            let tipoAcordo = "Reparcelamento";
+            const radios = document.getElementsByName('agreementType');
+            for (let r of radios) { if (r.checked) tipoAcordo = r.value; }
 
-            if(newStatus === "Concluído") {
-                showCustomConfirm(
-                    "Concluir Negociação",
-                    "Você tem certeza que deseja Concluir esta negociação?\n\nA ficha será movida para o histórico permanentemente.",
-                    "Sim, Concluir Ficha", 
-                    "Cancelar",
-                    function() { proceedSave(true, newStatus); },
-                    function() {}
-                );
-                return;
-            }
+            neg.propType = tipoAcordo;
+            neg.propAtrasadoQtd = document.getElementById('propAtrasadoQtd').value;
+            neg.propFuturoQtd = document.getElementById('propFuturoQtd').value;
+            neg.propNovoQtd = document.getElementById('propNovoQtd').value;
+            neg.propNovoValor = document.getElementById('propNovoValor').value;
+            neg.propVencimento = document.getElementById('propVencimento').value;
+            neg.propDesconto = document.getElementById('propDesconto').value;
+            neg.propRenegociarFuturo = document.getElementById('propRenegociarFuturo').value;
 
-            if(missedCallChecked && !willArchive) {
-                showCustomConfirm(
-                    "Registro de Não Atendido",
-                    "Você marcou a opção 'Registrar Não Atendimento'.\n\nO que você deseja fazer com esta ficha?",
-                    "Arquivar no Histórico", 
-                    "Manter nos Ativos",
-                    function() { 
-                        proceedSave(true, "Não Atendido");
-                    },
-                    function() { 
-                        if(!returnDate || !returnTime) {
-                            showCustomAlert("Falta de Dados", "Para manter o cliente no painel principal, é OBRIGATÓRIO preencher a Data e a Hora do próximo contato!");
-                            return;
-                        }
-                        proceedSave(false, newStatus);
-                    }
-                );
-                return;
-            }
-
-            if(!willArchive) {
-                if(!returnDate || !returnTime) {
-                    showCustomAlert("Falta de Dados", "Para salvar, é obrigatório definir a Data e a Hora do próximo contato!");
-                    return;
-                }
-            }
-
-            proceedSave(willArchive, newStatus);
-
-            function proceedSave(finalArchive, finalStatus) {
-                let summaryDetails = [];
-                let actionTitle = "Atualização de Negociação";
-
-                if(missedCallChecked) {
-                    neg.failedAttempts = (neg.failedAttempts || 0) + 1;
-                    summaryDetails.push(`Tentativa não atendida (Total de falhas: ${neg.failedAttempts})`);
-                }
-
-                if(finalArchive) {
-                    neg.status = finalStatus;
-                    neg.returnDate = null;
-                    neg.returnTime = null;
-                    summaryDetails.push(`Status alterado para: ${finalStatus}`);
-                    if (finalStatus === "Ligar Novamente") {
-                        actionTitle = "Ligar Novamente";
-                    } else {
-                        actionTitle = (finalStatus === "Não Atendido") ? "Não Atendido (Arquivado)" : "Encerramento de Negociação";
-                    }
-                } else {
-                    neg.status = finalStatus;
-                    neg.returnDate = returnDate;
-                    neg.returnTime = returnTime;
-                    summaryDetails.push(`Status: ${finalStatus} para ${formatDateBR(returnDate)} às ${returnTime}`);
-                }
-
-                const lastObs = (neg.observations && neg.observations.length > 0) ? neg.observations[neg.observations.length - 1] : "";
-                if(observationText && observationText !== lastObs) {
-                    if (!neg.observations) neg.observations = [];
-                    neg.observations.push(observationText);
-                    summaryDetails.push(`Obs: ${observationText}`);
-                }
-
-                const lastProp = (neg.proposals && neg.proposals.length > 0) ? neg.proposals[neg.proposals.length - 1] : "";
-                if(proposalText && proposalText !== lastProp) {
-                    if (!neg.proposals) neg.proposals = [];
-                    neg.proposals.push(proposalText);
-                    summaryDetails.push(`Proposta: ${proposalText}`);
-                }
-
-                if(summaryDetails.length === 0) {
-                    showCustomAlert("Sem Alterações", "Você não fez nenhuma alteração na ficha para poder salvar.");
-                    return;
-                }
-
+            if (isAcceptedNow && !neg.isAccepted) {
+                neg.isAccepted = true;
                 neg.timeline.push({
-                    date: getTimestamp(), 
-                    operator: operator,
-                    action: actionTitle,
-                    detail: summaryDetails.join(" | ")
+                    date: getTimestamp(), operator: operator,
+                    action: "Confissão de Dívida Aceita",
+                    detail: `Cliente confirmou e aceitou a confissão de dívida (${tipoAcordo}: ${neg.propNovoQtd}x de R$ ${neg.propNovoValor})`
                 });
-
-                saveData();
-                
-                if(finalArchive) {
-                    closeModal('detailsModal');
-                    switchTab('active');
-                } else {
-                    openDetails(currentNegotiationId);
-                }
+            } else if (!isAcceptedNow && neg.isAccepted) {
+                neg.isAccepted = false;
             }
+
+            let summaryDetails = [];
+            if (missedCallChecked) {
+                neg.failedAttempts = (neg.failedAttempts || 0) + 1;
+                summaryDetails.push(`Tentativa não atendida (Falhas: ${neg.failedAttempts})`);
+            }
+
+            neg.status = newStatus;
+            neg.returnDate = returnDate;
+            neg.returnTime = returnTime;
+            if (observationText) {
+                if (!neg.observations) neg.observations = [];
+                neg.observations.push(observationText);
+                summaryDetails.push(`Obs: ${observationText}`);
+            }
+
+            neg.timeline.push({
+                date: getTimestamp(), operator: operator,
+                action: "Atualização de Negociação",
+                detail: summaryDetails.join(" | ") || `Status alterado para ${newStatus}`
+            });
+
+            saveData();
+            showCustomAlert("Sucesso", "Alterações salvas com sucesso!");
+            openDetails(currentNegotiationId);
         }
 
-        function closeDetailsModal() {
-            if (currentNegotiationId) {
-                const neg = db.find(n => n.id === currentNegotiationId);
-                const currentStatus = document.getElementById('actionStatus').value;
-                const screenDate = document.getElementById('actionReturnDate').value;
-                const screenTime = document.getElementById('actionReturnTime').value;
-
-                if (currentStatus !== "Concluído" && currentStatus !== "Não Atendido" && currentStatus !== "Ligar Novamente" && (!screenDate || !screenTime)) {
-                    
-                    showCustomConfirm(
-                        "Ficha Aberta e Incompleta",
-                        "Você está fechando a tela sem agendar a Data e Hora para o próximo retorno.\n\nDeseja enviar esta ficha para o histórico de Inativos (Não Atendidos)?",
-                        "Sim, Enviar para Histórico",
-                        "Não, Voltar para Ficha",
-                        function() { 
-                            neg.status = "Não Atendido";
-                            neg.returnDate = null;
-                            neg.returnTime = null;
-                            neg.timeline.push({
-                                date: getTimestamp(),
-                                operator: operator,
-                                action: "Fechamento sem Agendamento",
-                                detail: "Janela fechada sem definir novo contato. Ficha enviada ao histórico."
-                            });
-                            saveData();
-                            closeModal('detailsModal');
-                            switchTab('active');
-                        },
-                        function() {}
-                    );
-                    return;
-                }
-            }
-            closeModal('detailsModal');
-        }
-
+        function closeDetailsModal() { closeModal('detailsModal'); }
         function executeResumeNegotiation() {
-            showCustomConfirm(
-                "Retomar Negociação",
-                "Tem certeza que deseja retomar este contato?\n\nEle voltará para os ativos e você poderá agendar a nova data de retorno imediatamente.",
-                "Sim, Retomar",
-                "Cancelar",
-                function() {
-                    const neg = db.find(n => n.id === currentNegotiationId);
-                    neg.status = "Retornar Dia";
-                    neg.responsible = operator;
-                    
-                    neg.timeline.push({
-                        date: getTimestamp(), operator: operator,
-                        action: "Retomada de negociação",
-                        detail: "Cliente reativado no sistema."
-                    });
-                    saveData();
-                    
-                    switchTab('active');
-                    document.getElementById('actionForms').style.display = 'block';
-                    document.getElementById('resumeArea').style.display = 'none';
-                    document.getElementById('detailStatusBadge').innerText = neg.status;
-                    document.getElementById('detailResponsible').innerText = neg.responsible;
-                    document.getElementById('actionStatus').value = "Retornar Dia";
-                    toggleReturnDate('actionStatus', 'actionReturnDateDiv');
-                    
-                    renderTimeline(neg);
-                },
-                function() {}
-            );
+            const neg = db.find(n => n.id === currentNegotiationId);
+            neg.status = "Retornar Dia";
+            saveData();
+            openDetails(currentNegotiationId);
         }
 
         function exportCSV() {
             const neg = db.find(n => n.id === currentNegotiationId);
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Data,Operador,Acao,Detalhes\n";
-            
-            if (neg.timeline) {
-                neg.timeline.forEach(t => {
-                    let detailEscaped = t.detail.replace(/"/g, '""');
-                    csvContent += `"${t.date}","${t.operator}","${t.action}","${detailEscaped}"\n`;
-                });
-            }
-            const encodedUri = encodeURI(csvContent);
+            let csv = "Data,Operador,Acao,Detalhes\n";
+            neg.timeline.forEach(t => { csv += `"${t.date}","${t.operator}","${t.action}","${t.detail.replace(/"/g, '""')}"\n`; });
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
+            link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv));
             link.setAttribute("download", `historico_${neg.clientName.replace(/\s+/g, '_')}.csv`);
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
