@@ -259,17 +259,17 @@
                     </button>
                 </div>
 
-                <!-- 3. MÓDULO DE CONFISSÃO DE DÍVIDA (No final) -->
+                <!-- 3. MÓDULO DE TERMO DE ACORDO (No final) -->
                 <div class="bg-blue-50 p-3 rounded border border-blue-200 space-y-3 mt-6">
-                    <h3 class="text-xs font-bold text-blue-900"><i class="fas fa-file-contract"></i> Termo de Confissão de Dívida & Proposta</h3>
+                    <h3 class="text-xs font-bold text-blue-900"><i class="fas fa-file-contract"></i> Termo de Acordo & Proposta</h3>
                     
                     <!-- Escolha por Caixas de Marcação -->
                     <div class="flex gap-4 text-xs font-bold bg-white p-2 rounded border">
                         <label class="flex items-center gap-1 cursor-pointer">
-                            <input type="radio" name="agreementType" value="Reparcelamento" checked onchange="generateConfissaoDivida()"> Reparcelamento
+                            <input type="radio" name="agreementType" value="Reparcelamento" checked onchange="generateTermoAcordo()"> Reparcelamento
                         </label>
                         <label class="flex items-center gap-1 cursor-pointer">
-                            <input type="radio" name="agreementType" value="Parcela Integral" onchange="generateConfissaoDivida()"> Parcela Integral
+                            <input type="radio" name="agreementType" value="Parcela Integral" onchange="generateTermoAcordo()"> Parcela Integral
                         </label>
                     </div>
 
@@ -277,11 +277,11 @@
                     <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2 rounded border">
                         <div>
                             <label class="block font-bold text-[10px]">Parcelas em Atraso:</label>
-                            <input type="text" id="propAtrasadoQtd" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 2 parcelas (R$ 300,00)">
+                            <input type="text" id="propAtrasadoQtd" oninput="generateTermoAcordo()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 2 parcelas (R$ 300,00)">
                         </div>
                         <div>
                             <label class="block font-bold text-[10px]">Parcelas a Vencer (Futuras):</label>
-                            <input type="text" id="propFuturoQtd" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 3 parcelas (R$ 450,00)">
+                            <input type="text" id="propFuturoQtd" oninput="generateTermoAcordo()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 3 parcelas (R$ 450,00)">
                         </div>
                     </div>
 
@@ -289,23 +289,23 @@
                     <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2 rounded border">
                         <div>
                             <label class="block font-bold text-[10px]">Novo Nº de Parcelas:</label>
-                            <input type="number" id="propNovoQtd" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 4">
+                            <input type="number" id="propNovoQtd" oninput="generateTermoAcordo()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 4">
                         </div>
                         <div>
                             <label class="block font-bold text-[10px]">Valor da Nova Parcela (R$):</label>
-                            <input type="text" id="propNovoValor" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 120,00">
+                            <input type="text" id="propNovoValor" oninput="generateTermoAcordo()" class="w-full border p-1 rounded text-xs" placeholder="Ex: 120,00">
                         </div>
                         <div>
                             <label class="block font-bold text-[10px]">Vencimento Base / Inicial:</label>
-                            <input type="date" id="propVencimento" onchange="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs">
+                            <input type="date" id="propVencimento" onchange="generateTermoAcordo()" class="w-full border p-1 rounded text-xs">
                         </div>
                         <div>
                             <label class="block font-bold text-[10px]">Desconto Aplicado:</label>
-                            <input type="text" id="propDesconto" oninput="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs" placeholder="Ex: R$ 50,00 ou 10%">
+                            <input type="text" id="propDesconto" oninput="generateTermoAcordo()" class="w-full border p-1 rounded text-xs" placeholder="Ex: R$ 50,00 ou 10%">
                         </div>
                         <div class="col-span-2">
                             <label class="block font-bold text-[10px]">Renegociar Valor Futuro?</label>
-                            <select id="propRenegociarFuturo" onchange="generateConfissaoDivida()" class="w-full border p-1 rounded text-xs bg-white">
+                            <select id="propRenegociarFuturo" onchange="generateTermoAcordo()" class="w-full border p-1 rounded text-xs bg-white">
                                 <option value="Não">Não</option>
                                 <option value="Sim">Sim</option>
                             </select>
@@ -316,13 +316,13 @@
                     <div class="bg-amber-100 p-2 rounded border border-amber-300 flex items-center justify-between">
                         <div>
                             <span class="text-xs font-bold text-amber-900 block"><i class="fas fa-check-circle"></i> Aceite do Cliente Confirmado</span>
-                            <span class="text-[10px] text-gray-700">Marca se o cliente concordou com a confissão de dívida.</span>
+                            <span class="text-[10px] text-gray-700">Marque se o cliente concordou com as condições do acordo.</span>
                         </div>
-                        <input type="checkbox" id="propAcceptedCheck" onchange="generateConfissaoDivida()" class="w-5 h-5 text-amber-600 rounded cursor-pointer">
+                        <input type="checkbox" id="propAcceptedCheck" onchange="generateTermoAcordo()" class="w-5 h-5 text-amber-600 rounded cursor-pointer">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-blue-900 mb-1">Prévia da Confissão de Dívida:</label>
+                        <label class="block text-xs font-bold text-blue-900 mb-1">Prévia do Termo de Acordo:</label>
                         <textarea id="propTermText" class="w-full border p-2 rounded text-xs bg-white font-mono" rows="6" readonly></textarea>
                         <button onclick="document.getElementById('whatsappMessageInput').value = document.getElementById('propTermText').value" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold p-2 rounded text-xs mt-2 transition flex items-center justify-center gap-2 shadow">
                             <i class="fas fa-arrow-up"></i> Enviar este Termo para a Caixa do WhatsApp acima
@@ -538,9 +538,9 @@
             if (document.getElementById('calcPMed').value !== '') calculateFromP();
         }
 
-        // Gerador de Confissão de Dívida e Proposta Completa
+        // Gerador de Termo de Acordo e Proposta
         // isLoad = true previne que a caixa do Whatsapp seja sobrescrita automaticamente ao abrir a ficha
-        function generateConfissaoDivida(isLoad = false) {
+        function generateTermoAcordo(isLoad = false) {
             const neg = db.find(n => n.id === currentNegotiationId);
             const clientName = neg ? neg.clientName : "Cliente";
             const clientCpf = neg ? (neg.cpf || "Não informado") : "Não informado";
@@ -562,20 +562,20 @@
 
             const aceiteStatus = accepted ? "✅ *ACORDO ACEITO E CONFIRMADO PELO CLIENTE*" : "⏳ *Aguardando Confirmação e Aceite*";
 
-            const termo = `*TERMO DE CONFISSÃO E RECONHECIMENTO DE DÍVIDA - ESCOLA INSTRUCTIVA*\n\n` +
-                          `Pelo presente instrumento, o(a) Sr(a). *${clientName}*, CPF: *${clientCpf}*, reconhece e confessa a dívida pendente com a Escola Instructiva, nos seguintes termos:\n\n` +
-                          `1. *SITUAÇÃO ANTERIOR DA DÍVIDA:*\n` +
+            const termo = `*TERMO DE ACEITE DE ACORDO - ESCOLA INSTRUCTIVA*\n\n` +
+                          `Eu, *${clientName}*, CPF: *${clientCpf}*, declaro que aceito as condições propostas abaixo para a regularização do meu plano com a Escola Instructiva:\n\n` +
+                          `1. *RESUMO DA PENDÊNCIA:*\n` +
                           `• Parcelas em Atraso: ${atrasado}\n` +
-                          `• Parcelas Futuras (A Vencer): ${futuro}\n\n` +
-                          `2. *NOVA CONDIÇÃO ACORDADA (${tipoAcordo.toUpperCase()}):*\n` +
-                          `• Quantidade de Novas Parcelas: ${novoQtd}x\n` +
-                          `• Valor de Cada Parcela: R$ ${novoValor}\n` +
-                          `• Vencimento Base / Inicial: ${vencimento}\n` +
+                          `• Parcelas a Vencer: ${futuro}\n\n` +
+                          `2. *NOVAS CONDIÇÕES (${tipoAcordo.toUpperCase()}):*\n` +
+                          `• Novo Parcelamento: ${novoQtd}x\n` +
+                          `• Valor da Parcela: R$ ${novoValor}\n` +
+                          `• Vencimento Inicial: ${vencimento}\n` +
                           `• Desconto Aplicado: ${desconto}\n` +
-                          `• Renegociação de Valores Futuros: ${renegociarFuturo}\n\n` +
-                          `3. *STATUS DO ACORDO:*\n` +
+                          `• Valores Futuros Renegociados: ${renegociarFuturo}\n\n` +
+                          `*STATUS DO ACORDO:*\n` +
                           `${aceiteStatus}\n\n` +
-                          `Respeitosamente,\n*Escola Instructiva*`;
+                          `Atenciosamente,\n*Escola Instructiva*`;
 
             document.getElementById('propTermText').value = termo;
             
@@ -1031,7 +1031,7 @@
             document.getElementById('detailFailedAttempts').innerText = neg.failedAttempts || 0;
             document.getElementById('editClientBox').classList.add('hidden');
 
-            // Carregar dados salvos da proposta/confissão
+            // Carregar dados salvos da proposta/acordo
             document.getElementById('propAtrasadoQtd').value = neg.propAtrasadoQtd || "";
             document.getElementById('propFuturoQtd').value = neg.propFuturoQtd || "";
             document.getElementById('propNovoQtd').value = neg.propNovoQtd || "";
@@ -1048,8 +1048,8 @@
                 }
             }
 
-            // Ao abrir a ficha, gera a confissão, MAS não joga para a caixa do Whatsapp ainda (isLoad = true)
-            generateConfissaoDivida(true); 
+            // Ao abrir a ficha, gera o termo, MAS não joga para a caixa do Whatsapp ainda (isLoad = true)
+            generateTermoAcordo(true); 
             
             // Coloca a mensagem padrão na caixa do WhatsApp ao carregar a ficha
             document.getElementById('whatsappMessageInput').value = `Olá, Sr(a). ${neg.clientName}. Tudo bem? Aqui é ${operator}, da Escola Instructiva. Gostaria muito de falar com o(a) senhor(a). Podemos conversar um minutinho?`;
@@ -1085,7 +1085,7 @@
             const observationText = document.getElementById('actionObservation').value.trim();
             const isAcceptedNow = document.getElementById('propAcceptedCheck').checked;
 
-            // Salvar campos da confissão de dívida
+            // Salvar campos do termo de acordo
             let tipoAcordo = "Reparcelamento";
             const radios = document.getElementsByName('agreementType');
             for (let r of radios) { if (r.checked) tipoAcordo = r.value; }
@@ -1103,8 +1103,8 @@
                 neg.isAccepted = true;
                 neg.timeline.push({
                     date: getTimestamp(), operator: operator,
-                    action: "Confissão de Dívida Aceita",
-                    detail: `Cliente confirmou e aceitou a confissão de dívida (${tipoAcordo}: ${neg.propNovoQtd}x de R$ ${neg.propNovoValor})`
+                    action: "Acordo Aceite",
+                    detail: `Cliente confirmou e aceitou o acordo (${tipoAcordo}: ${neg.propNovoQtd}x de R$ ${neg.propNovoValor})`
                 });
             } else if (!isAcceptedNow && neg.isAccepted) {
                 neg.isAccepted = false;
