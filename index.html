@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRM Cobrança & Negociação</title>
-    <!-- NOTA PARA O FUTURO: O script do Tailwind via CDN deixa o carregamento inicial 
-         levemente mais lento. Para produção final oficial, o ideal é usar o Tailwind CLI. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
@@ -59,7 +57,6 @@
             <div class="flex w-full md:w-auto space-x-2 flex-wrap gap-2">
                 <div class="relative w-full md:w-64">
                     <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                    <!-- OPT: Removido onkeyup="renderPanels()" e colocado debounceSearch() -->
                     <input type="text" id="searchInput" onkeyup="debounceSearch()" placeholder="Buscar cliente..." class="w-full border pl-10 p-2 rounded shadow-sm focus:outline-none focus:border-blue-500">
                 </div>
                 
@@ -1014,6 +1011,12 @@
             document.getElementById('detailStatusBadge').innerText = neg.status;
             document.getElementById('detailFailedAttempts').innerText = neg.failedAttempts || 0;
             document.getElementById('editClientBox').classList.add('hidden');
+
+            // CORREÇÃO: Carrega estritamente a data e hora guardadas NESTE cliente (evita herdar da ficha anterior)
+            document.getElementById('actionReturnDate').value = neg.returnDate || "";
+            document.getElementById('actionReturnTime').value = neg.returnTime || "";
+            document.getElementById('actionObservation').value = "";
+            document.getElementById('checkMissedCall').checked = false;
 
             document.getElementById('propAtrasadoQtd').value = neg.propAtrasadoQtd || "";
             document.getElementById('propFuturoQtd').value = neg.propFuturoQtd || "";
