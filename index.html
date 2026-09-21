@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRM Cobrança & Negociação</title>
+    <!-- NOTA PARA O FUTURO: O script do Tailwind via CDN deixa o carregamento inicial 
+         levemente mais lento. Para produção final oficial, o ideal é usar o Tailwind CLI. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
@@ -57,7 +59,8 @@
             <div class="flex w-full md:w-auto space-x-2 flex-wrap gap-2">
                 <div class="relative w-full md:w-64">
                     <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                    <input type="text" id="searchInput" onkeyup="renderPanels()" placeholder="Buscar cliente..." class="w-full border pl-10 p-2 rounded shadow-sm focus:outline-none focus:border-blue-500">
+                    <!-- OPT: Removido onkeyup="renderPanels()" e colocado debounceSearch() -->
+                    <input type="text" id="searchInput" onkeyup="debounceSearch()" placeholder="Buscar cliente..." class="w-full border pl-10 p-2 rounded shadow-sm focus:outline-none focus:border-blue-500">
                 </div>
                 
                 <button onclick="openImportModal()" class="bg-purple-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-purple-700 whitespace-nowrap">
@@ -125,7 +128,7 @@
                 <div class="grid grid-cols-2 gap-2 relative">
                     <div class="col-span-2 relative">
                         <label class="block text-sm font-bold">Nome do Cliente</label>
-                        <input type="text" id="newClientName" oninput="handleNameInput(this.value)" class="w-full border p-2 rounded" placeholder="Nome completo" autocomplete="off">
+                        <input type="text" id="newClientName" oninput="debounceNameInput(this.value)" class="w-full border p-2 rounded" placeholder="Nome completo" autocomplete="off">
                         <div id="nameSuggestions" class="absolute left-0 right-0 bg-white border rounded shadow-lg mt-1 max-h-40 overflow-y-auto hidden z-20"></div>
                     </div>
                     <div>
@@ -212,7 +215,7 @@
                     Falhas de contato: <span id="detailFailedAttempts" class="font-bold text-red-600"></span>
                 </div>
 
-                <!-- 1. CAIXA DE WHATSAPP (Saudação Padrão no topo das ações) -->
+                <!-- 1. CAIXA DE WHATSAPP -->
                 <div class="bg-green-50 p-3 rounded border border-green-200">
                     <label class="block text-xs font-bold text-green-800 mb-1"><i class="fab fa-whatsapp"></i> Caixa de Envio para o WhatsApp</label>
                     <textarea id="whatsappMessageInput" class="w-full border p-1.5 rounded text-sm mb-2 bg-white" rows="4" placeholder="O termo gerado ou sua saudação aparecerá aqui..."></textarea>
@@ -230,7 +233,6 @@
                             <option value="Aguardando aceite">Aguardando aceite</option>
                             <option value="Ligar Novamente">Ligar Novamente</option>
                             <option value="Não Atendido">Não Atendido (Arquivar no Histórico)</option>
-                            <!-- Nova opção mais clara para quando o cliente responder "EU ACEITO" -->
                             <option value="Acordo Aceito / Concluído">Acordo Aceito / Concluído</option>
                         </select>
                         <div id="actionReturnDateDiv" class="mt-2">
@@ -260,11 +262,10 @@
                     </button>
                 </div>
 
-                <!-- 3. MÓDULO DE PROPOSTA DE ACORDO (Sem checkbox) -->
+                <!-- 3. MÓDULO DE PROPOSTA DE ACORDO -->
                 <div class="bg-blue-50 p-3 rounded border border-blue-200 space-y-3 mt-6">
                     <h3 class="text-xs font-bold text-blue-900"><i class="fas fa-file-contract"></i> Termo de Proposta de Acordo</h3>
                     
-                    <!-- Escolha por Caixas de Marcação -->
                     <div class="flex gap-4 text-xs font-bold bg-white p-2 rounded border">
                         <label class="flex items-center gap-1 cursor-pointer">
                             <input type="radio" name="agreementType" value="Reparcelamento" checked onchange="generateTermoAcordo()"> Reparcelamento
@@ -274,7 +275,6 @@
                         </label>
                     </div>
 
-                    <!-- Cenário Anterior (Atrasado + Futuro) -->
                     <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2 rounded border">
                         <div>
                             <label class="block font-bold text-[10px]">Parcelas em Atraso:</label>
@@ -286,7 +286,6 @@
                         </div>
                     </div>
 
-                    <!-- Nova Condição Acordada -->
                     <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2 rounded border">
                         <div>
                             <label class="block font-bold text-[10px]">Novo Nº de Parcelas:</label>
@@ -328,7 +327,6 @@
                         <i class="fas fa-calculator"></i> Calculadora de Negociação
                     </h3>
                     
-                    <!-- Bloco 1: Atrasados -->
                     <div class="bg-white p-2 rounded border mb-2 text-xs">
                         <span class="font-bold text-blue-800 block mb-1">Bloco 1: Atrasados & Desconto</span>
                         <div class="grid grid-cols-2 gap-1 mb-1">
@@ -353,7 +351,6 @@
                         </div>
                     </div>
 
-                    <!-- Bloco 2: Por Vencer -->
                     <div class="bg-white p-2 rounded border mb-2 text-xs">
                         <span class="font-bold text-blue-800 block mb-1">Bloco 2: Por Vencer</span>
                         <div class="grid grid-cols-2 gap-1 mb-1">
@@ -372,7 +369,6 @@
                         </div>
                     </div>
 
-                    <!-- Bloco 3: Interpolação Linear -->
                     <div class="bg-white p-2 rounded border text-xs">
                         <span class="font-bold text-blue-800 block mb-1">Bloco 3: Interpolação Linear</span>
                         <div class="grid grid-cols-4 gap-1 mb-1">
@@ -458,9 +454,15 @@
 
         let confirmCallbackFn = null;
         let cancelCallbackFn = null;
+        
+        // Variáveis de controle de Otimização
+        let searchTimeout = null;
+        let nameSuggestionTimeout = null;
+        let isModalOpen = false;
 
+        // OTIMIZAÇÃO: A cada 30 segundos atualiza APENAS se o modal de detalhes estiver fechado.
         setInterval(() => {
-            if(document.getElementById('appScreen').style.display !== 'none') {
+            if(document.getElementById('appScreen').style.display !== 'none' && !isModalOpen) {
                 renderPanels();
             }
         }, 30000);
@@ -530,10 +532,11 @@
             if (document.getElementById('calcPMed').value !== '') calculateFromP();
         }
 
-        // Gerador de Termo de Acordo com call-to-action para o cliente responder
+        // OTIMIZAÇÃO: Não precisa buscar o cliente com "db.find" toda vez que digita 1 letra na proposta.
+        // Pega o nome e CPF diretamente da interface já carregada (elementos HTML)
         function generateTermoAcordo(isLoad = false) {
-            const neg = db.find(n => n.id === currentNegotiationId);
-            const clientName = neg ? neg.clientName : "Cliente";
+            const clientName = document.getElementById('detailClientName').innerText || "Cliente";
+            const clientCpf = document.getElementById('detailCpf').innerText || "Não informado";
             
             let tipoAcordo = "Reparcelamento";
             const radios = document.getElementsByName('agreementType');
@@ -549,7 +552,6 @@
             const desconto = document.getElementById('propDesconto').value || "Nenhum";
             const renegociarFuturo = document.getElementById('propRenegociarFuturo').value;
 
-            // O novo texto remove a burocracia do CPF e apela de forma mais direta com um CTA pro cliente dar o "aceite" via chat.
             const termo = `*PROPOSTA DE ACORDO - ESCOLA INSTRUCTIVA*\n\n` +
                           `Olá, *${clientName}*. Abaixo estão as condições propostas para a regularização do seu plano:\n\n` +
                           `1. *RESUMO DA PENDÊNCIA:*\n` +
@@ -666,20 +668,22 @@
             document.getElementById('appScreen').style.display = 'block';
             document.getElementById('operatorNameDisplay').innerText = operator;
             dbRef = database.ref('crm_data');
+            
+            // OTIMIZAÇÃO: Renderiza apenas se não estivermos com um painel crítico aberto, para não travar
             dbRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 db = data ? data : []; 
-                renderPanels();
-                if (currentNegotiationId) {
+                
+                if(!isModalOpen) {
+                    renderPanels();
+                }
+
+                if (currentNegotiationId && isModalOpen) {
                     const neg = db.find(n => n.id === currentNegotiationId);
                     if (neg) {
+                        // Apenas atualiza a timeline, não redesenha os inputs preenchidos para não apagar o que o cara digita
                         renderTimeline(neg);
-                        document.getElementById('detailClientName').innerText = neg.clientName;
-                        document.getElementById('detailCpf').innerText = neg.cpf || 'Não informado';
-                        document.getElementById('detailTel').innerText = neg.tel || 'Não informado';
-                        document.getElementById('detailEmail').innerText = neg.email || 'Não informado';
                         document.getElementById('detailStatusBadge').innerText = neg.status;
-                        document.getElementById('detailResponsible').innerText = neg.responsible || 'Sem responsável';
                         document.getElementById('detailFailedAttempts').innerText = neg.failedAttempts || 0;
                     } else { closeModal('detailsModal'); }
                 }
@@ -704,10 +708,12 @@
         }
 
         function validateCpf(cpf) { return cleanNumbers(cpf).length === 11; }
-        function validatePhone(phone) { const c = cleanNumbers(phone); return c.length === 10 || c.length === 11; }
-        function validateEmail(email) { return email.includes('@') && email.includes('.'); }
 
-        function openImportModal() { document.getElementById('csvFileInput').value = ""; openModal('importModal'); }
+        function openImportModal() { 
+            document.getElementById('csvFileInput').value = ""; 
+            isModalOpen = true; 
+            openModal('importModal'); 
+        }
 
         function downloadCSVTemplate() {
             const csv = "Nome,CPF,Telefone,Email\n";
@@ -786,7 +792,13 @@
             neg.timeline.push({ date: getTimestamp(), operator: operator, action: "Edição de Dados", detail: `Atualizado por ${operator}` });
             saveData();
             toggleEditClient();
-            openDetails(currentNegotiationId);
+            
+            // OTIMIZAÇÃO: Atualiza a UI direto sem precisar chamar openDetails de novo
+            document.getElementById('detailClientName').innerText = neg.clientName;
+            document.getElementById('detailCpf').innerText = neg.cpf;
+            document.getElementById('detailTel').innerText = neg.tel;
+            document.getElementById('detailEmail').innerText = neg.email;
+            
             showCustomAlert("Sucesso", "Dados atualizados com sucesso!");
         }
 
@@ -800,6 +812,12 @@
             if (!phoneClean.startsWith("55")) phoneClean = "55" + phoneClean;
             const msgText = document.getElementById('whatsappMessageInput').value.trim();
             window.open(`https://api.whatsapp.com/send?phone=${phoneClean}&text=${encodeURIComponent(msgText)}`, '_blank');
+        }
+
+        // OTIMIZAÇÃO: Debounce para as sugestões de nome no cadastro
+        function debounceNameInput(val) {
+            clearTimeout(nameSuggestionTimeout);
+            nameSuggestionTimeout = setTimeout(() => { handleNameInput(val); }, 300);
         }
 
         function handleNameInput(val) {
@@ -840,14 +858,18 @@
             renderPanels();
         }
 
+        // OTIMIZAÇÃO: Debounce da Busca. Impede a tela de piscar a cada tecla digitada
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => { renderPanels(); }, 300);
+        }
+
         function renderPanels() { renderActive(); renderHistory(); }
 
         function renderActive() {
             const panel = document.getElementById('activePanel');
             const searchTerm = normalizeText(document.getElementById('searchInput').value);
             const ativas = db.filter(n => {
-                // Modificado para não ocultar os que fecharam acordo "Acordo Aceito / Concluído" a não ser que a gente queira.
-                // Mas geralmente concluído some do painel principal.
                 if (n.status === "Concluído" || n.status === "Acordo Aceito / Concluído" || n.status === "Não Atendido" || n.status === "Ligar Novamente") return false;
                 if (!searchTerm) return true;
                 const normName = normalizeText(n.clientName);
@@ -957,6 +979,7 @@
             document.getElementById('duplicateResultArea').innerHTML = "";
             document.getElementById('stepFillData').style.display = 'none';
             document.getElementById('btnCancelStep1').style.display = 'flex';
+            isModalOpen = true;
             openModal('newNegotiationModal');
         }
 
@@ -966,7 +989,7 @@
             if(rawTerm.length < 2) { resultArea.innerHTML = `<p class="text-red-600 text-sm">Digite ao menos 2 caracteres.</p>`; return; }
             const found = db.find(n => cleanNumbers(n.cpf).includes(cleanNumbers(rawTerm)) || normalizeText(n.clientName).includes(normalizeText(rawTerm)));
             if(found) {
-                resultArea.innerHTML = `<div class="bg-yellow-100 border p-3 rounded"><p class="font-bold">Possível duplicidade: ${found.clientName}</p><button onclick="openDetails('${found.id}'); closeModal('newNegotiationModal');" class="bg-yellow-600 text-white px-3 py-1 rounded text-sm mt-1">Abrir Cadastro</button></div>`;
+                resultArea.innerHTML = `<div class="bg-yellow-100 border p-3 rounded"><p class="font-bold">Possível duplicidade: ${found.clientName}</p><button onclick="closeModal('newNegotiationModal'); openDetails('${found.id}');" class="bg-yellow-600 text-white px-3 py-1 rounded text-sm mt-1">Abrir Cadastro</button></div>`;
                 document.getElementById('stepFillData').style.display = 'none';
             } else {
                 resultArea.innerHTML = `<p class="text-green-600 text-sm font-bold">Nenhum conflito. Preencha abaixo:</p>`;
@@ -995,7 +1018,6 @@
 
         function toggleReturnDate(selectId, dateDivId) {
             const val = document.getElementById(selectId).value;
-            // Se for concluído, não atendido ou ligar novamente, tira a exigência da data.
             document.getElementById(dateDivId).style.display = (['Concluído', 'Acordo Aceito / Concluído', 'Não Atendido', 'Ligar Novamente'].includes(val)) ? 'none' : 'block';
         }
 
@@ -1009,6 +1031,7 @@
 
         function openDetails(id) {
             currentNegotiationId = id;
+            isModalOpen = true; // Impede re-renderização completa da tela de trás
             const neg = db.find(n => n.id === id);
             neg.responsible = operator;
             if (neg.status === "Importado / Novo") neg.status = "Em Atendimento / Novo";
@@ -1023,7 +1046,6 @@
             document.getElementById('detailFailedAttempts').innerText = neg.failedAttempts || 0;
             document.getElementById('editClientBox').classList.add('hidden');
 
-            // Carregar dados salvos da proposta/acordo
             document.getElementById('propAtrasadoQtd').value = neg.propAtrasadoQtd || "";
             document.getElementById('propFuturoQtd').value = neg.propFuturoQtd || "";
             document.getElementById('propNovoQtd').value = neg.propNovoQtd || "";
@@ -1039,10 +1061,8 @@
                 }
             }
 
-            // Ao abrir a ficha, gera o termo, MAS não joga para a caixa do Whatsapp ainda (isLoad = true)
             generateTermoAcordo(true); 
             
-            // Coloca a mensagem padrão na caixa do WhatsApp ao carregar a ficha
             document.getElementById('whatsappMessageInput').value = `Olá, Sr(a). ${neg.clientName}. Tudo bem? Aqui é ${operator}, da Escola Instructiva. Gostaria muito de falar com o(a) senhor(a). Podemos conversar um minutinho?`;
 
             renderTimeline(neg);
@@ -1075,7 +1095,6 @@
             const missedCallChecked = document.getElementById('checkMissedCall').checked;
             const observationText = document.getElementById('actionObservation').value.trim();
 
-            // Salvar campos do termo de acordo
             let tipoAcordo = "Reparcelamento";
             const radios = document.getElementsByName('agreementType');
             for (let r of radios) { if (r.checked) tipoAcordo = r.value; }
@@ -1091,7 +1110,6 @@
 
             let summaryDetails = [];
             
-            // Se o atendente marcar Acordo Aceito, colocamos um log específico destacando a vitória.
             if (newStatus === "Acordo Aceito / Concluído") {
                  summaryDetails.push(`✅ Acordo Fechado e Aceito pelo Cliente: ${tipoAcordo} - ${neg.propNovoQtd}x de R$ ${neg.propNovoValor}`);
             }
@@ -1118,15 +1136,27 @@
 
             saveData();
             showCustomAlert("Sucesso", "Alterações salvas com sucesso!");
-            openDetails(currentNegotiationId);
+            
+            // OTIMIZAÇÃO: Ao invés de fechar, recarregar a ficha atualizando apenas as falhas e badges da UI
+            document.getElementById('detailStatusBadge').innerText = neg.status;
+            document.getElementById('detailFailedAttempts').innerText = neg.failedAttempts || 0;
+            document.getElementById('actionObservation').value = '';
+            document.getElementById('checkMissedCall').checked = false;
+            renderTimeline(neg);
         }
 
-        function closeDetailsModal() { closeModal('detailsModal'); }
+        function closeDetailsModal() { 
+            isModalOpen = false; 
+            currentNegotiationId = null;
+            closeModal('detailsModal');
+            renderPanels(); // Renderiza os painéis principais de trás ao fechar o modal
+        }
+
         function executeResumeNegotiation() {
             const neg = db.find(n => n.id === currentNegotiationId);
             neg.status = "Retornar Dia";
             saveData();
-            openDetails(currentNegotiationId);
+            document.getElementById('detailStatusBadge').innerText = neg.status;
         }
 
         function exportCSV() {
@@ -1140,7 +1170,11 @@
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; if(id === 'detailsModal') currentNegotiationId = null; }
+        
+        function closeModal(id) { 
+            document.getElementById(id).style.display = 'none'; 
+            if(id === 'importModal' || id === 'newNegotiationModal') isModalOpen = false;
+        }
     </script>
 </body>
 </html>
