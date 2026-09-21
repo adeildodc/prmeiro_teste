@@ -54,12 +54,17 @@
                 <button onclick="switchTab('history')" id="btnTabHistory" class="px-4 py-2 bg-gray-300 text-gray-700 rounded font-bold hover:bg-gray-400 w-full md:w-auto">Histórico (Inativos)</button>
             </div>
             
-            <div class="flex w-full md:w-auto space-x-2">
+            <div class="flex w-full md:w-auto space-x-2 flex-wrap gap-2">
                 <div class="relative w-full md:w-64">
                     <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                     <input type="text" id="searchInput" onkeyup="renderPanels()" placeholder="Buscar cliente..." class="w-full border pl-10 p-2 rounded shadow-sm focus:outline-none focus:border-blue-500">
                 </div>
                 
+                <!-- Botão Calculadora -->
+                <button onclick="openCalculatorModal()" class="bg-indigo-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-indigo-700 whitespace-nowrap">
+                    <i class="fas fa-calculator"></i> Calculadora
+                </button>
+
                 <!-- Botão de Importação -->
                 <button onclick="openImportModal()" class="bg-purple-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-purple-700 whitespace-nowrap">
                     <i class="fas fa-file-import"></i> Importar
@@ -77,6 +82,95 @@
             <div class="bg-white rounded shadow p-4">
                 <h2 class="text-xl font-bold mb-4">Negociações Concluídas e Não Atendidas</h2>
                 <div id="historyList" class="space-y-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Calculadora de Negociação -->
+    <div id="calculatorModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-calculator text-indigo-600"></i> Calculadora de Negociação</h2>
+                <button onclick="closeModal('calculatorModal')" class="text-gray-500 hover:text-gray-700 text-xl font-bold">&times;</button>
+            </div>
+
+            <!-- Bloco 1: Atrasados -->
+            <div class="bg-gray-50 p-4 rounded border mb-4">
+                <h3 class="font-bold text-sm text-blue-800 mb-2"><i class="fas fa-file-invoice-dollar"></i> Bloco 1: Atrasados & Desconto</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Atrasado Total (R$)</label>
+                        <input type="number" id="calcAtrasadoTotal" step="0.01" oninput="calculateBloco1()" class="w-full border p-2 rounded text-sm bg-white" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Desconto (%)</label>
+                        <input type="number" id="calcDescontoPercent" step="0.01" oninput="calculateBloco1()" class="w-full border p-2 rounded text-sm bg-white" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Valor do Desconto (R$)</label>
+                        <input type="text" id="calcValorDesconto" readonly class="w-full border p-2 rounded text-sm bg-gray-100 font-bold text-red-600" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Valor c/ Desconto (R$)</label>
+                        <input type="text" id="calcValorComDesconto" readonly class="w-full border p-2 rounded text-sm bg-gray-100 font-bold text-green-600" placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bloco 2: Por Vencer -->
+            <div class="bg-gray-50 p-4 rounded border mb-4">
+                <h3 class="font-bold text-sm text-blue-800 mb-2"><i class="fas fa-calendar-plus"></i> Bloco 2: Por Vencer (Parcelas Futuras)</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Nº de Parcelas</label>
+                        <input type="number" id="calcNumParcelas" oninput="calculateBloco2()" class="w-full border p-2 rounded text-sm bg-white" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Valor da Parcela (R$)</label>
+                        <input type="number" id="calcValorParcela" step="0.01" oninput="calculateBloco2()" class="w-full border p-2 rounded text-sm bg-white" placeholder="0.00">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold mb-1">Total por Vencer (R$)</label>
+                        <input type="text" id="calcTotalPorVencer" readonly class="w-full border p-2 rounded text-sm bg-gray-100 font-bold text-blue-600" placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bloco 3: Interpolação Linear -->
+            <div class="bg-gray-50 p-4 rounded border mb-4">
+                <h3 class="font-bold text-sm text-blue-800 mb-2"><i class="fas fa-chart-line"></i> Bloco 3: Interpolação Linear</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                    <div>
+                        <label class="block text-[10px] font-bold">Valor I (VI)</label>
+                        <input type="number" id="calcVI" step="0.01" oninput="calculateInterpolation()" class="w-full border p-1.5 rounded text-xs bg-white" placeholder="Ex: 100">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold">Parcela I (PI)</label>
+                        <input type="number" id="calcPI" oninput="calculateInterpolation()" class="w-full border p-1.5 rounded text-xs bg-white" placeholder="Ex: 1">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold">Valor F (VF)</label>
+                        <input type="number" id="calcVF" step="0.01" oninput="calculateInterpolation()" class="w-full border p-1.5 rounded text-xs bg-white" placeholder="Ex: 500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold">Parcela F (PF)</label>
+                        <input type="number" id="calcPF" oninput="calculateInterpolation()" class="w-full border p-1.5 rounded text-xs bg-white" placeholder="Ex: 10">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t pt-2">
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Parcela Mediana (Pmed)</label>
+                        <input type="number" id="calcPMed" oninput="calculateFromP()" class="w-full border p-2 rounded text-sm bg-white border-indigo-300" placeholder="Digite parcela...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1">Valor Mediano (Vmed)</label>
+                        <input type="number" id="calcVMed" step="0.01" oninput="calculateFromV()" class="w-full border p-2 rounded text-sm bg-white border-indigo-300" placeholder="Digite valor...">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button onclick="closeModal('calculatorModal')" class="bg-gray-300 text-gray-800 px-4 py-2 rounded font-bold hover:bg-gray-400">Fechar Calculadora</button>
             </div>
         </div>
     </div>
@@ -308,7 +402,7 @@
         </div>
     </div>
 
-    <!-- Lógica e Conexão Firebase Otimizada com Alertas de Prazo -->
+    <!-- Lógica e Conexão Firebase Otimizada com Alertas de Prazo e Calculadora -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyC69ynCbWuJmE4JmstjPdpMSdWlSOU1hPM",
@@ -348,6 +442,77 @@
                 return `${parts[2]}/${parts[1]}/${parts[0]}`;
             }
             return dateStr;
+        }
+
+        // Funções da Calculadora de Negociação
+        function openCalculatorModal() {
+            openModal('calculatorModal');
+        }
+
+        function calculateBloco1() {
+            const total = parseFloat(document.getElementById('calcAtrasadoTotal').value) || 0;
+            const desc = parseFloat(document.getElementById('calcDescontoPercent').value) || 0;
+            
+            const valDesconto = total * (desc / 100);
+            const valComDesconto = total - valDesconto;
+
+            document.getElementById('calcValorDesconto').value = valDesconto.toFixed(2);
+            document.getElementById('calcValorComDesconto').value = valComDesconto.toFixed(2);
+        }
+
+        function calculateBloco2() {
+            const parcelas = parseFloat(document.getElementById('calcNumParcelas').value) || 0;
+            const valor = parseFloat(document.getElementById('calcValorParcela').value) || 0;
+            
+            const total = parcelas * valor;
+            document.getElementById('calcTotalPorVencer').value = total.toFixed(2);
+        }
+
+        let isCalculatingInterpolation = false;
+
+        function calculateFromP() {
+            if (isCalculatingInterpolation) return;
+            isCalculatingInterpolation = true;
+
+            const VI = parseFloat(document.getElementById('calcVI').value);
+            const PI = parseFloat(document.getElementById('calcPI').value);
+            const VF = parseFloat(document.getElementById('calcVF').value);
+            const PF = parseFloat(document.getElementById('calcPF').value);
+            const Pmed = parseFloat(document.getElementById('calcPMed').value);
+
+            if (!isNaN(VI) && !isNaN(PI) && !isNaN(VF) && !isNaN(PF) && !isNaN(Pmed) && (PF !== PI)) {
+                const Vmed = VI + (VF - VI) * ((Pmed - PI) / (PF - PI));
+                document.getElementById('calcVMed').value = Vmed.toFixed(2);
+            } else {
+                document.getElementById('calcVMed').value = '';
+            }
+            isCalculatingInterpolation = false;
+        }
+
+        function calculateFromV() {
+            if (isCalculatingInterpolation) return;
+            isCalculatingInterpolation = true;
+
+            const VI = parseFloat(document.getElementById('calcVI').value);
+            const PI = parseFloat(document.getElementById('calcPI').value);
+            const VF = parseFloat(document.getElementById('calcVF').value);
+            const PF = parseFloat(document.getElementById('calcPF').value);
+            const Vmed = parseFloat(document.getElementById('calcVMed').value);
+
+            if (!isNaN(VI) && !isNaN(PI) && !isNaN(VF) && !isNaN(PF) && !isNaN(Vmed) && (VF !== VI)) {
+                const Pmed = PI + (PF - PI) * ((Vmed - VI) / (VF - VI));
+                document.getElementById('calcPMed').value = Pmed.toFixed(2);
+            } else {
+                document.getElementById('calcPMed').value = '';
+            }
+            isCalculatingInterpolation = false;
+        }
+
+        function calculateInterpolation() {
+            const pMedVal = document.getElementById('calcPMed').value;
+            if (pMedVal !== '') {
+                calculateFromP();
+            }
         }
 
         function showCustomAlert(title, message) {
