@@ -165,7 +165,7 @@
         </div>
     </div>
 
-    <!-- MODAL: Detalhes e Ações da Negociação (Painel Unificado com Ordem Corrigida) -->
+    <!-- MODAL: Detalhes e Ações da Negociação -->
     <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 w-full max-w-6xl shadow-xl flex gap-4 h-[94vh]">
             
@@ -230,7 +230,8 @@
                             <option value="Aguardando aceite">Aguardando aceite</option>
                             <option value="Ligar Novamente">Ligar Novamente</option>
                             <option value="Não Atendido">Não Atendido (Arquivar no Histórico)</option>
-                            <option value="Concluído">Concluído</option>
+                            <!-- Nova opção mais clara para quando o cliente responder "EU ACEITO" -->
+                            <option value="Acordo Aceito / Concluído">Acordo Aceito / Concluído</option>
                         </select>
                         <div id="actionReturnDateDiv" class="mt-2">
                             <label class="block text-[10px] font-bold">Data e Hora para Retorno:</label>
@@ -259,9 +260,9 @@
                     </button>
                 </div>
 
-                <!-- 3. MÓDULO DE TERMO DE ACORDO (No final) -->
+                <!-- 3. MÓDULO DE PROPOSTA DE ACORDO (Sem checkbox) -->
                 <div class="bg-blue-50 p-3 rounded border border-blue-200 space-y-3 mt-6">
-                    <h3 class="text-xs font-bold text-blue-900"><i class="fas fa-file-contract"></i> Termo de Acordo & Proposta</h3>
+                    <h3 class="text-xs font-bold text-blue-900"><i class="fas fa-file-contract"></i> Termo de Proposta de Acordo</h3>
                     
                     <!-- Escolha por Caixas de Marcação -->
                     <div class="flex gap-4 text-xs font-bold bg-white p-2 rounded border">
@@ -312,25 +313,16 @@
                         </div>
                     </div>
 
-                    <!-- Confirmação de Aceite -->
-                    <div class="bg-amber-100 p-2 rounded border border-amber-300 flex items-center justify-between">
-                        <div>
-                            <span class="text-xs font-bold text-amber-900 block"><i class="fas fa-check-circle"></i> Aceite do Cliente Confirmado</span>
-                            <span class="text-[10px] text-gray-700">Marque se o cliente concordou com as condições do acordo.</span>
-                        </div>
-                        <input type="checkbox" id="propAcceptedCheck" onchange="generateTermoAcordo()" class="w-5 h-5 text-amber-600 rounded cursor-pointer">
-                    </div>
-
                     <div>
                         <label class="block text-xs font-bold text-blue-900 mb-1">Prévia do Termo de Acordo:</label>
-                        <textarea id="propTermText" class="w-full border p-2 rounded text-xs bg-white font-mono" rows="6" readonly></textarea>
+                        <textarea id="propTermText" class="w-full border p-2 rounded text-xs bg-white font-mono" rows="8" readonly></textarea>
                         <button onclick="document.getElementById('whatsappMessageInput').value = document.getElementById('propTermText').value" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold p-2 rounded text-xs mt-2 transition flex items-center justify-center gap-2 shadow">
                             <i class="fas fa-arrow-up"></i> Enviar este Termo para a Caixa do WhatsApp acima
                         </button>
                     </div>
                 </div>
 
-                <!-- 4. CALCULADORA INTEGRADA NA FICHA (Também no final) -->
+                <!-- 4. CALCULADORA INTEGRADA NA FICHA -->
                 <div class="bg-indigo-50 p-3 rounded border border-indigo-200 mt-4">
                     <h3 class="text-xs font-bold text-indigo-900 mb-2 flex items-center gap-1">
                         <i class="fas fa-calculator"></i> Calculadora de Negociação
@@ -538,12 +530,10 @@
             if (document.getElementById('calcPMed').value !== '') calculateFromP();
         }
 
-        // Gerador de Termo de Acordo e Proposta
-        // isLoad = true previne que a caixa do Whatsapp seja sobrescrita automaticamente ao abrir a ficha
+        // Gerador de Termo de Acordo com call-to-action para o cliente responder
         function generateTermoAcordo(isLoad = false) {
             const neg = db.find(n => n.id === currentNegotiationId);
             const clientName = neg ? neg.clientName : "Cliente";
-            const clientCpf = neg ? (neg.cpf || "Não informado") : "Não informado";
             
             let tipoAcordo = "Reparcelamento";
             const radios = document.getElementsByName('agreementType');
@@ -558,12 +548,10 @@
             const vencimento = formatDateBR(document.getElementById('propVencimento').value) || "A combinar";
             const desconto = document.getElementById('propDesconto').value || "Nenhum";
             const renegociarFuturo = document.getElementById('propRenegociarFuturo').value;
-            const accepted = document.getElementById('propAcceptedCheck').checked;
 
-            const aceiteStatus = accepted ? "✅ *ACORDO ACEITO E CONFIRMADO PELO CLIENTE*" : "⏳ *Aguardando Confirmação e Aceite*";
-
-            const termo = `*TERMO DE ACEITE DE ACORDO - ESCOLA INSTRUCTIVA*\n\n` +
-                          `Eu, *${clientName}*, CPF: *${clientCpf}*, declaro que aceito as condições propostas abaixo para a regularização do meu plano com a Escola Instructiva:\n\n` +
+            // O novo texto remove a burocracia do CPF e apela de forma mais direta com um CTA pro cliente dar o "aceite" via chat.
+            const termo = `*PROPOSTA DE ACORDO - ESCOLA INSTRUCTIVA*\n\n` +
+                          `Olá, *${clientName}*. Abaixo estão as condições propostas para a regularização do seu plano:\n\n` +
                           `1. *RESUMO DA PENDÊNCIA:*\n` +
                           `• Parcelas em Atraso: ${atrasado}\n` +
                           `• Parcelas a Vencer: ${futuro}\n\n` +
@@ -573,8 +561,9 @@
                           `• Vencimento Inicial: ${vencimento}\n` +
                           `• Desconto Aplicado: ${desconto}\n` +
                           `• Valores Futuros Renegociados: ${renegociarFuturo}\n\n` +
-                          `*STATUS DO ACORDO:*\n` +
-                          `${aceiteStatus}\n\n` +
+                          `*COMO CONFIRMAR:*\n` +
+                          `Para validar e oficializar este acordo, por favor, responda esta mensagem digitando a frase:\n` +
+                          `*"EU ACEITO"*\n\n` +
                           `Atenciosamente,\n*Escola Instructiva*`;
 
             document.getElementById('propTermText').value = termo;
@@ -757,7 +746,7 @@
                     db.push({
                         id: generateId(), clientName, cpf: cpf || "Não informado", tel: tel || "Não informado", email: email || "Não informado",
                         responsible: "", status: "Importado / Novo", returnDate: "", returnTime: "", allowTakeover: "Sim", failedAttempts: 0,
-                        observations: [], proposals: [], isAccepted: false, createdAt: getTimestamp(),
+                        observations: [], proposals: [], createdAt: getTimestamp(),
                         timeline: [{ date: getTimestamp(), operator: "Sistema Automático", action: "Importação em Lote", detail: "Ficha criada via importação CSV." }]
                     });
                     added++;
@@ -857,7 +846,9 @@
             const panel = document.getElementById('activePanel');
             const searchTerm = normalizeText(document.getElementById('searchInput').value);
             const ativas = db.filter(n => {
-                if (n.status === "Concluído" || n.status === "Não Atendido" || n.status === "Ligar Novamente") return false;
+                // Modificado para não ocultar os que fecharam acordo "Acordo Aceito / Concluído" a não ser que a gente queira.
+                // Mas geralmente concluído some do painel principal.
+                if (n.status === "Concluído" || n.status === "Acordo Aceito / Concluído" || n.status === "Não Atendido" || n.status === "Ligar Novamente") return false;
                 if (!searchTerm) return true;
                 const normName = normalizeText(n.clientName);
                 const searchClean = cleanNumbers(document.getElementById('searchInput').value);
@@ -939,7 +930,7 @@
             const list = document.getElementById('historyList');
             const searchTerm = normalizeText(document.getElementById('searchInput').value);
             const inativas = db.filter(n => {
-                if (n.status !== "Concluído" && n.status !== "Não Atendido" && n.status !== "Ligar Novamente") return false;
+                if (n.status !== "Concluído" && n.status !== "Acordo Aceito / Concluído" && n.status !== "Não Atendido" && n.status !== "Ligar Novamente") return false;
                 if (!searchTerm) return true;
                 return normalizeText(n.clientName).includes(searchTerm);
             });
@@ -994,7 +985,7 @@
             db.push({
                 id: newId, clientName, cpf: cpf || "Não informado", tel: tel || "Não informado", email: email || "Não informado",
                 responsible: operator, status: "Em Atendimento / Novo", returnDate: "", returnTime: "", allowTakeover: document.getElementById('newAllowTakeover').value,
-                failedAttempts: 0, observations: [], proposals: [], isAccepted: false, createdAt: getTimestamp(),
+                failedAttempts: 0, observations: [], proposals: [], createdAt: getTimestamp(),
                 timeline: [{ date: getTimestamp(), operator: operator, action: "Criação do Cadastro", detail: `Cadastrado por ${operator}` }]
             });
             saveData(); 
@@ -1004,7 +995,8 @@
 
         function toggleReturnDate(selectId, dateDivId) {
             const val = document.getElementById(selectId).value;
-            document.getElementById(dateDivId).style.display = (['Concluído', 'Não Atendido', 'Ligar Novamente'].includes(val)) ? 'none' : 'block';
+            // Se for concluído, não atendido ou ligar novamente, tira a exigência da data.
+            document.getElementById(dateDivId).style.display = (['Concluído', 'Acordo Aceito / Concluído', 'Não Atendido', 'Ligar Novamente'].includes(val)) ? 'none' : 'block';
         }
 
         function takeover(id) {
@@ -1039,7 +1031,6 @@
             document.getElementById('propVencimento').value = neg.propVencimento || "";
             document.getElementById('propDesconto').value = neg.propDesconto || "";
             document.getElementById('propRenegociarFuturo').value = neg.propRenegociarFuturo || "Não";
-            document.getElementById('propAcceptedCheck').checked = neg.isAccepted || false;
 
             if (neg.propType) {
                 const radios = document.getElementsByName('agreementType');
@@ -1083,7 +1074,6 @@
             const returnTime = document.getElementById('actionReturnTime').value;
             const missedCallChecked = document.getElementById('checkMissedCall').checked;
             const observationText = document.getElementById('actionObservation').value.trim();
-            const isAcceptedNow = document.getElementById('propAcceptedCheck').checked;
 
             // Salvar campos do termo de acordo
             let tipoAcordo = "Reparcelamento";
@@ -1099,18 +1089,13 @@
             neg.propDesconto = document.getElementById('propDesconto').value;
             neg.propRenegociarFuturo = document.getElementById('propRenegociarFuturo').value;
 
-            if (isAcceptedNow && !neg.isAccepted) {
-                neg.isAccepted = true;
-                neg.timeline.push({
-                    date: getTimestamp(), operator: operator,
-                    action: "Acordo Aceite",
-                    detail: `Cliente confirmou e aceitou o acordo (${tipoAcordo}: ${neg.propNovoQtd}x de R$ ${neg.propNovoValor})`
-                });
-            } else if (!isAcceptedNow && neg.isAccepted) {
-                neg.isAccepted = false;
+            let summaryDetails = [];
+            
+            // Se o atendente marcar Acordo Aceito, colocamos um log específico destacando a vitória.
+            if (newStatus === "Acordo Aceito / Concluído") {
+                 summaryDetails.push(`✅ Acordo Fechado e Aceito pelo Cliente: ${tipoAcordo} - ${neg.propNovoQtd}x de R$ ${neg.propNovoValor}`);
             }
 
-            let summaryDetails = [];
             if (missedCallChecked) {
                 neg.failedAttempts = (neg.failedAttempts || 0) + 1;
                 summaryDetails.push(`Tentativa não atendida (Falhas: ${neg.failedAttempts})`);
