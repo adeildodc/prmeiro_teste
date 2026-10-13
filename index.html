@@ -381,6 +381,7 @@
 
                 <div class="mt-6 space-y-2">
                     <button onclick="exportCSV()" class="w-full bg-gray-800 text-white text-sm p-2 rounded hover:bg-gray-900"><i class="fas fa-file-csv"></i> Exportar Histórico</button>
+                    <button onclick="deleteCurrentNegotiation()" class="w-full bg-red-600 text-white text-sm p-2 rounded hover:bg-red-700 font-bold shadow transition"><i class="fas fa-trash-alt"></i> Excluir Registro Permanentemente</button>
                     <button onclick="closeDetailsModal()" class="w-full bg-gray-300 text-gray-800 text-sm p-2 rounded hover:bg-gray-400">Fechar Janela</button>
                 </div>
             </div>
@@ -407,14 +408,14 @@
 
     <div id="customConfirmModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-[100]">
         <div class="bg-white rounded-xl p-8 w-full max-w-md shadow-2xl text-center transform transition-all">
-            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
-                <i class="fas fa-question-circle text-3xl text-blue-600"></i>
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <i class="fas fa-exclamation-triangle text-3xl text-red-600"></i>
             </div>
             <h3 class="text-2xl font-bold text-gray-900 mb-3" id="customConfirmTitle">Atenção</h3>
             <p class="text-lg text-gray-700 mb-6 leading-relaxed whitespace-pre-line" id="customConfirmMessage">Mensagem da pergunta aqui.</p>
 
             <div class="flex flex-col gap-3 justify-center mt-2">
-                <button id="customConfirmBtnConfirm" class="w-full px-6 py-3 bg-blue-600 text-white text-lg font-bold rounded hover:bg-blue-700 transition shadow">Sim, Confirmar</button>
+                <button id="customConfirmBtnConfirm" class="w-full px-6 py-3 bg-red-600 text-white text-lg font-bold rounded hover:bg-red-700 transition shadow">Sim, Confirmar Exclusão</button>
                 <button id="customConfirmBtnCancel" class="w-full px-6 py-3 bg-gray-200 text-gray-800 text-lg font-bold rounded hover:bg-gray-300 transition">Cancelar</button>
             </div>
         </div>
@@ -441,9 +442,6 @@
         let currentNegotiationId = null;
         let db = []; 
         let operatorsList = [];
-
-        let confirmCallbackFn = null;
-        let cancelCallbackFn = null;
 
         let searchTimeout = null;
         let nameSuggestionTimeout = null;
@@ -568,6 +566,30 @@
 
         function closeCustomAlert() {
             document.getElementById('customAlertModal').style.display = 'none';
+        }
+
+        function showCustomConfirm(title, message, onConfirm) {
+            document.getElementById('customConfirmTitle').innerText = title;
+            document.getElementById('customConfirmMessage').innerText = message;
+            
+            const btnConfirm = document.getElementById('customConfirmBtnConfirm');
+            const btnCancel = document.getElementById('customConfirmBtnCancel');
+
+            const newBtnConfirm = btnConfirm.cloneNode(true);
+            const newBtnCancel = btnCancel.cloneNode(true);
+            btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
+            btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+            newBtnConfirm.onclick = function() {
+                document.getElementById('customConfirmModal').style.display = 'none';
+                onConfirm();
+            };
+            
+            newBtnCancel.onclick = function() {
+                document.getElementById('customConfirmModal').style.display = 'none';
+            };
+
+            document.getElementById('customConfirmModal').style.display = 'flex';
         }
 
         window.onload = function() { startDatabase(); };
@@ -1029,7 +1051,6 @@
             const email = document.getElementById('newEmail').value.trim();
             const obs = document.getElementById('newObservation').value.trim();
 
-            // 1. Validação dos campos obrigatórios
             if(!clientName || !tel || !email) { 
                 showCustomAlert("Campos Obrigatórios", "Nome, Telefone e E-mail são obrigatórios para o cadastro!"); 
                 return; 
@@ -1038,7 +1059,6 @@
             const cleanCpfVal = cleanNumbers(cpf);
             const cleanTelVal = cleanNumbers(tel);
 
-            // 2. Trava de Duplicidade (Verifica se CPF ou Telefone já existem no banco)
             const existingClient = db.find(n => {
                 const dbCpf = cleanNumbers(n.cpf);
                 const dbTel = cleanNumbers(n.tel);
@@ -1056,7 +1076,6 @@
                 return;
             }
 
-            // 3. Se não houver duplicidade, cria o novo cadastro
             const newId = generateId();
 
             const newClient = {
@@ -1086,8 +1105,23 @@
             saveData(); 
             closeModal('newNegotiationModal');
 
-            // Abre a ficha imediatamente para negociação
             openDetails(newId);
+        }
+
+        function deleteCurrentNegotiation() {
+            const neg = db.find(n => n.id === currentNegotiationId);
+            if (!neg) return;
+
+            showCustomConfirm(
+                "⚠️ EXCLUIR REGISTRO",
+                `Tem certeza de que deseja EXCLUIR permanentemente o cadastro de:\n\n👉 "${neg.clientName}"?\n\nEsta ação apaga todo o histórico e não poderá ser desfeita!`,
+                function() {
+                    db = db.filter(n => n.id !== currentNegotiationId);
+                    saveData();
+                    closeDetailsModal();
+                    showCustomAlert("Registro Excluído", `O cliente "${neg.clientName}" foi removido com sucesso.`);
+                }
+            );
         }
 
         function toggleReturnDate(selectId, dateDivId) {
