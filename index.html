@@ -112,57 +112,47 @@
     <!-- MODAL: Nova Negociação Manual -->
     <div id="newNegotiationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
-            <h2 class="text-xl font-bold mb-4">Iniciar Novo Cadastro</h2>
-            
-            <div id="stepSearchDuplicate" class="mb-4 p-4 border rounded bg-gray-50">
-                <label class="block text-sm font-bold mb-2">Verifique se o devedor já existe (CPF, E-mail, Telefone ou Nome):</label>
-                <div class="flex gap-2">
-                    <input type="text" id="duplicateSearchInput" class="w-full border p-2 rounded" placeholder="Digite CPF, e-mail, tel ou nome...">
-                    <button onclick="checkDuplicate()" class="bg-gray-800 text-white px-4 rounded font-bold hover:bg-gray-900">Buscar</button>
-                </div>
-                <div id="duplicateResultArea" class="mt-3"></div>
-            </div>
+            <h2 class="text-xl font-bold mb-4"><i class="fas fa-user-plus text-green-600"></i> Iniciar Novo Cadastro</h2>
 
-            <div id="stepFillData" class="space-y-3 hidden">
+            <div id="stepFillData" class="space-y-3">
                 <div class="grid grid-cols-2 gap-2 relative">
                     <div class="col-span-2 relative">
-                        <label class="block text-sm font-bold">Nome do Cliente</label>
+                        <label class="block text-sm font-bold">1. Nome do Cliente</label>
                         <input type="text" id="newClientName" oninput="debounceNameInput(this.value)" class="w-full border p-2 rounded" placeholder="Nome completo" autocomplete="off">
                         <div id="nameSuggestions" class="absolute left-0 right-0 bg-white border rounded shadow-lg mt-1 max-h-40 overflow-y-auto hidden z-20"></div>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold">CPF (11 dígitos)</label>
+                        <label class="block text-sm font-bold">2. CPF (11 dígitos)</label>
                         <input type="text" id="newCpf" class="w-full border p-2 rounded" placeholder="000.000.000-00" maxlength="14">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold">Telefone (DDD + 8/9 Números)</label>
+                        <label class="block text-sm font-bold">3. Telefone (DDD + Números)</label>
                         <input type="text" id="newTel" class="w-full border p-2 rounded" placeholder="(00) 00000-0000" maxlength="15">
                     </div>
                     <div class="col-span-2">
-                        <label class="block text-sm font-bold">E-mail</label>
+                        <label class="block text-sm font-bold">4. E-mail</label>
                         <input type="email" id="newEmail" class="w-full border p-2 rounded" placeholder="cliente@email.com">
                     </div>
                 </div>
                 <hr class="my-2">
                 <div>
-                    <label class="block text-sm font-bold">Permitir que outro atendente assuma?</label>
-                    <select id="newAllowTakeover" class="w-full border p-2 rounded">
+                    <label class="block text-xs font-bold">Permitir que outro atendente assuma?</label>
+                    <select id="newAllowTakeover" class="w-full border p-1.5 rounded text-xs">
                         <option value="Sim">Sim</option>
                         <option value="Não">Não</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-bold">Observação Inicial</label>
-                    <textarea id="newObservation" class="w-full border p-2 rounded" rows="2" placeholder="Opcional..."></textarea>
+                    <label class="block text-xs font-bold">Observação Inicial (Opcional)</label>
+                    <textarea id="newObservation" class="w-full border p-1.5 rounded text-xs" rows="2" placeholder="Digite aqui se houver..."></textarea>
                 </div>
-                
+
                 <div class="mt-6 flex justify-end space-x-3">
-                    <button onclick="closeModal('newNegotiationModal')" class="bg-gray-400 text-white px-4 py-2 rounded">Cancelar</button>
-                    <button onclick="createNegotiation()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700">Salvar e Atender Cliente</button>
+                    <button onclick="closeModal('newNegotiationModal')" class="bg-gray-400 text-white px-4 py-2 rounded text-sm font-bold">Cancelar</button>
+                    <button onclick="createNegotiation()" class="bg-green-600 text-white px-4 py-2 rounded font-bold text-sm hover:bg-green-700 shadow flex items-center gap-2">
+                        <i class="fas fa-play"></i> Salvar e Abrir Negociação
+                    </button>
                 </div>
-            </div>
-            <div id="btnCancelStep1" class="mt-4 flex justify-end">
-                <button onclick="closeModal('newNegotiationModal')" class="bg-gray-400 text-white px-4 py-2 rounded">Cancelar Cadastro</button>
             </div>
         </div>
     </div>
@@ -170,7 +160,7 @@
     <!-- MODAL: Detalhes e Ações da Negociação -->
     <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 w-full max-w-6xl shadow-xl flex gap-4 h-[94vh]">
-            
+
             <!-- Coluna Esquerda: Ações, Formulários, Proposta e Calculadora -->
             <div class="w-1/2 border-r pr-4 overflow-y-auto space-y-4">
                 <div class="flex justify-between items-start mb-1">
@@ -208,7 +198,7 @@
                         <button onclick="toggleEditClient()" class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded">Cancelar</button>
                     </div>
                 </div>
-                
+
                 <div class="text-sm bg-gray-100 p-2 rounded">
                     Resp: <span id="detailResponsible" class="font-bold"></span> | Status: <span id="detailStatusBadge" class="font-bold text-blue-700"></span><br>
                     Falhas de contato: <span id="detailFailedAttempts" class="font-bold text-red-600"></span>
@@ -265,7 +255,7 @@
                 <!-- 3. MÓDULO DE PROPOSTA DE ACORDO -->
                 <div class="bg-blue-50 p-3 rounded border border-blue-200 space-y-3 mt-6">
                     <h3 class="text-xs font-bold text-blue-900"><i class="fas fa-file-contract"></i> Termo de Proposta de Acordo</h3>
-                    
+
                     <div class="flex gap-4 text-xs font-bold bg-white p-2 rounded border">
                         <label class="flex items-center gap-1 cursor-pointer">
                             <input type="radio" name="agreementType" value="Reparcelamento" checked onchange="generateTermoAcordo()"> Reparcelamento
@@ -326,7 +316,7 @@
                     <h3 class="text-xs font-bold text-indigo-900 mb-2 flex items-center gap-1">
                         <i class="fas fa-calculator"></i> Calculadora de Negociação
                     </h3>
-                    
+
                     <div class="bg-white p-2 rounded border mb-2 text-xs">
                         <span class="font-bold text-blue-800 block mb-1">Bloco 1: Atrasados & Desconto</span>
                         <div class="grid grid-cols-2 gap-1 mb-1">
@@ -422,7 +412,7 @@
             </div>
             <h3 class="text-2xl font-bold text-gray-900 mb-3" id="customConfirmTitle">Atenção</h3>
             <p class="text-lg text-gray-700 mb-6 leading-relaxed whitespace-pre-line" id="customConfirmMessage">Mensagem da pergunta aqui.</p>
-            
+
             <div class="flex flex-col gap-3 justify-center mt-2">
                 <button id="customConfirmBtnConfirm" class="w-full px-6 py-3 bg-blue-600 text-white text-lg font-bold rounded hover:bg-blue-700 transition shadow">Sim, Confirmar</button>
                 <button id="customConfirmBtnCancel" class="w-full px-6 py-3 bg-gray-200 text-gray-800 text-lg font-bold rounded hover:bg-gray-300 transition">Cancelar</button>
@@ -444,7 +434,7 @@
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        
+
         let dbRef = null;
         let operatorsRef = null;
         let operator = localStorage.getItem('crm_operator') || "";
@@ -454,11 +444,11 @@
 
         let confirmCallbackFn = null;
         let cancelCallbackFn = null;
-        
+
         let searchTimeout = null;
         let nameSuggestionTimeout = null;
         let isModalOpen = false;
-        let currentTab = 'active'; // Aba ativa atual ('active', 'recurring', 'history')
+        let currentTab = 'active';
 
         setInterval(() => {
             if(document.getElementById('appScreen').style.display !== 'none' && !isModalOpen) {
@@ -532,7 +522,7 @@
 
         function generateTermoAcordo(isLoad = false) {
             const clientName = document.getElementById('detailClientName').innerText || "Cliente";
-            
+
             let tipoAcordo = "Reparcelamento";
             const radios = document.getElementsByName('agreementType');
             for (let r of radios) {
@@ -564,7 +554,7 @@
                           `Atenciosamente,\n*Escola Instructiva*`;
 
             document.getElementById('propTermText').value = termo;
-            
+
             if (!isLoad) {
                 document.getElementById('whatsappMessageInput').value = termo;
             }
@@ -643,11 +633,11 @@
             document.getElementById('appScreen').style.display = 'block';
             document.getElementById('operatorNameDisplay').innerText = operator;
             dbRef = database.ref('crm_data');
-            
+
             dbRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 db = data ? data : []; 
-                
+
                 if(!isModalOpen) {
                     renderPanels();
                 }
@@ -765,12 +755,12 @@
             neg.timeline.push({ date: getTimestamp(), operator: operator, action: "Edição de Dados", detail: `Atualizado por ${operator}` });
             saveData();
             toggleEditClient();
-            
+
             document.getElementById('detailClientName').innerText = neg.clientName;
             document.getElementById('detailCpf').innerText = neg.cpf;
             document.getElementById('detailTel').innerText = neg.tel;
             document.getElementById('detailEmail').innerText = neg.email;
-            
+
             showCustomAlert("Sucesso", "Dados atualizados com sucesso!");
         }
 
@@ -813,7 +803,7 @@
         function switchTab(tab, skipRender = false) {
             currentTab = tab;
             const searchTerm = normalizeText(document.getElementById('searchInput').value);
-            
+
             const btnActive = document.getElementById('btnTabActive');
             const btnRecurring = document.getElementById('btnTabRecurring');
             const btnHistory = document.getElementById('btnTabHistory');
@@ -830,7 +820,6 @@
                 btnHistory.className = "px-4 py-2 bg-blue-600 text-white rounded font-bold";
             }
 
-            // Só mexe no display dos painéis se NÃO estiver no meio de uma busca global
             if (!searchTerm) {
                 document.getElementById('activePanel').style.display = (tab === 'active') ? 'grid' : 'none';
                 document.getElementById('recurringPanel').style.display = (tab === 'recurring') ? 'grid' : 'none';
@@ -874,10 +863,9 @@
                 alertBadge = `<div class="mb-2"><span class="animate-pulse bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm"><i class="fas fa-exclamation-triangle"></i> 🚨 NOVO - NUNCA CONTACTADO</span></div>`;
             }
 
-            // Se for do histórico, qualquer um pode abrir para ver (ou o dono)
             let btnLabel = isHistory ? "Abrir Ficha (Histórico)" : "Abrir Negociação";
             let btnAcaoHTML = "";
-            
+
             if (isHistory || isMine) {
                 btnAcaoHTML = `<button onclick="openDetails('${n.id}')" class="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 shadow font-bold">${btnLabel}</button>`;
             } else if (canTakeover) {
@@ -887,7 +875,7 @@
             }
 
             let returnInfo = hasScheduledReturn ? `<div class="bg-white p-2 rounded border border-red-300 my-2 text-center shadow-inner"><p class="text-xs text-red-600 font-bold uppercase"><i class="fas fa-calendar-alt"></i> Próximo Retorno:</p><p class="text-base text-red-700 font-extrabold">${formatDateBR(n.returnDate)} às ${n.returnTime}</p></div>` : `<p class="text-xs text-blue-600 font-bold my-2"><i class="fas fa-clock"></i> Sem retorno agendado</p>`;
-            
+
             let lastObs = (n.observations && n.observations.length > 0) ? n.observations[n.observations.length - 1] : "Nenhuma obs.";
 
             return `
@@ -920,13 +908,13 @@
         }
 
         function renderGlobalSearch(searchTerm) {
-            document.getElementById('activePanel').style.display = 'grid'; // Usamos o grid do painel ativo
+            document.getElementById('activePanel').style.display = 'grid';
             document.getElementById('recurringPanel').style.display = 'none';
             document.getElementById('historyPanel').style.display = 'none';
-            
+
             const panel = document.getElementById('activePanel');
             const searchClean = cleanNumbers(document.getElementById('searchInput').value);
-            
+
             const resultados = db.filter(n => {
                 const normName = normalizeText(n.clientName);
                 return normName.includes(searchTerm) || 
@@ -940,23 +928,20 @@
             }
 
             let htmlContent = `<div class="col-span-full mb-2 bg-blue-100 text-blue-800 p-2 rounded border border-blue-200 font-bold text-sm text-center">Modo Busca Global: Encontrado(s) ${resultados.length} cliente(s) em todo o sistema.</div>`;
-            
-            // Ordena os resultados para manter a mesma lógica de prioridade de contato
+
             sortItems(resultados).forEach(n => { htmlContent += buildCardHtml(n); });
-            
+
             panel.innerHTML = htmlContent;
         }
 
         function renderPanels() {
             const searchTerm = normalizeText(document.getElementById('searchInput').value);
-            
+
             if (searchTerm) {
-                // Se houver busca, renderiza o modo global ignorando a aba atual
                 renderGlobalSearch(searchTerm);
             } else {
-                // Restaura a exibição baseada na aba que o operador clicou
                 switchTab(currentTab, true);
-                
+
                 if (currentTab === 'active') renderActive();
                 if (currentTab === 'recurring') renderRecurring();
                 if (currentTab === 'history') renderHistory();
@@ -966,7 +951,6 @@
         function renderActive() {
             const panel = document.getElementById('activePanel');
             const ativas = db.filter(n => {
-                // Exclui históricos e recorrentes
                 if (n.status === "Concluído" || n.status === "Acordo Aceito / Concluído" || n.status === "Não Atendido" || n.status === "Ligar Novamente" || n.status === "Cobrança Recorrente") return false;
                 return true;
             });
@@ -1023,51 +1007,91 @@
             list.innerHTML = htmlContent;
         }
 
+        /* --- ABRIR MODAL DE NOVO CLIENTE (DIRETO NOS 4 CAMPOS) --- */
         function openNewModal() {
-            document.getElementById('duplicateSearchInput').value = "";
-            document.getElementById('duplicateResultArea').innerHTML = "";
-            document.getElementById('stepFillData').style.display = 'none';
-            document.getElementById('btnCancelStep1').style.display = 'flex';
+            document.getElementById('newClientName').value = "";
+            document.getElementById('newCpf').value = "";
+            document.getElementById('newTel').value = "";
+            document.getElementById('newEmail').value = "";
+            document.getElementById('newObservation').value = "";
+
+            document.getElementById('stepFillData').style.display = 'block';
+
             isModalOpen = true;
             openModal('newNegotiationModal');
         }
 
-        function checkDuplicate() {
-            const rawTerm = document.getElementById('duplicateSearchInput').value.trim();
-            const resultArea = document.getElementById('duplicateResultArea');
-            if(rawTerm.length < 2) { resultArea.innerHTML = `<p class="text-red-600 text-sm">Digite ao menos 2 caracteres.</p>`; return; }
-            const found = db.find(n => cleanNumbers(n.cpf).includes(cleanNumbers(rawTerm)) || normalizeText(n.clientName).includes(normalizeText(rawTerm)));
-            if(found) {
-                resultArea.innerHTML = `<div class="bg-yellow-100 border p-3 rounded"><p class="font-bold">Possível duplicidade: ${found.clientName}</p><button onclick="closeModal('newNegotiationModal'); openDetails('${found.id}');" class="bg-yellow-600 text-white px-3 py-1 rounded text-sm mt-1">Abrir Cadastro</button></div>`;
-                document.getElementById('stepFillData').style.display = 'none';
-            } else {
-                resultArea.innerHTML = `<p class="text-green-600 text-sm font-bold">Nenhum conflito. Preencha abaixo:</p>`;
-                document.getElementById('stepFillData').style.display = 'block';
-                document.getElementById('btnCancelStep1').style.display = 'none';
-            }
-        }
-
+        /* --- SALVAR NOVO CLIENTE COM TRAVA AUTOMÁTICA DE DUPLICIDADE --- */
         function createNegotiation() {
             const clientName = document.getElementById('newClientName').value.trim();
             const cpf = document.getElementById('newCpf').value.trim();
             const tel = document.getElementById('newTel').value.trim();
             const email = document.getElementById('newEmail').value.trim();
-            if(!clientName || !tel || !email) { showCustomAlert("Erro", "Nome, Telefone e E-mail são obrigatórios!"); return; }
-            const newId = generateId();
-            db.push({
-                id: newId, clientName, cpf: cpf || "Não informado", tel: tel || "Não informado", email: email || "Não informado",
-                responsible: operator, status: "Em Atendimento / Novo", returnDate: "", returnTime: "", allowTakeover: document.getElementById('newAllowTakeover').value,
-                failedAttempts: 0, observations: [], proposals: [], createdAt: getTimestamp(),
-                timeline: [{ date: getTimestamp(), operator: operator, action: "Criação do Cadastro", detail: `Cadastrado por ${operator}` }]
+            const obs = document.getElementById('newObservation').value.trim();
+
+            // 1. Validação dos campos obrigatórios
+            if(!clientName || !tel || !email) { 
+                showCustomAlert("Campos Obrigatórios", "Nome, Telefone e E-mail são obrigatórios para o cadastro!"); 
+                return; 
+            }
+
+            const cleanCpfVal = cleanNumbers(cpf);
+            const cleanTelVal = cleanNumbers(tel);
+
+            // 2. Trava de Duplicidade (Verifica se CPF ou Telefone já existem no banco)
+            const existingClient = db.find(n => {
+                const dbCpf = cleanNumbers(n.cpf);
+                const dbTel = cleanNumbers(n.tel);
+                return (cleanCpfVal && dbCpf && dbCpf === cleanCpfVal) || 
+                       (cleanTelVal && dbTel && dbTel === cleanTelVal);
             });
+
+            if (existingClient) {
+                showCustomAlert(
+                    "Cliente Já Cadastrado!", 
+                    `O cliente "${existingClient.clientName}" já possui cadastro com este CPF/Telefone. Abrindo a ficha existente...`
+                );
+                closeModal('newNegotiationModal');
+                openDetails(existingClient.id);
+                return;
+            }
+
+            // 3. Se não houver duplicidade, cria o novo cadastro
+            const newId = generateId();
+
+            const newClient = {
+                id: newId, 
+                clientName: clientName, 
+                cpf: cpf || "Não informado", 
+                tel: tel || "Não informado", 
+                email: email || "Não informado",
+                responsible: operator, 
+                status: "Em Atendimento / Novo", 
+                returnDate: "", 
+                returnTime: "", 
+                allowTakeover: document.getElementById('newAllowTakeover').value,
+                failedAttempts: 0, 
+                observations: obs ? [obs] : [], 
+                proposals: [], 
+                createdAt: getTimestamp(),
+                timeline: [{ 
+                    date: getTimestamp(), 
+                    operator: operator, 
+                    action: "Criação do Cadastro", 
+                    detail: `Cadastrado por ${operator}${obs ? ' - Obs: ' + obs : ''}` 
+                }]
+            };
+
+            db.push(newClient);
             saveData(); 
             closeModal('newNegotiationModal');
+
+            // Abre a ficha imediatamente para negociação
             openDetails(newId);
         }
 
         function toggleReturnDate(selectId, dateDivId) {
             const val = document.getElementById(selectId).value;
-            // Para "Cobrança Recorrente" a data continuará aparecendo, pois não está na lista abaixo
             document.getElementById(dateDivId).style.display = (['Concluído', 'Acordo Aceito / Concluído', 'Não Atendido'].includes(val)) ? 'none' : 'block';
         }
 
@@ -1120,7 +1144,7 @@
             }
 
             generateTermoAcordo(true); 
-            
+
             document.getElementById('whatsappMessageInput').value = `Olá ${neg.clientName}. Tudo bem? Aqui é ${operator}, da Escola Instructiva. Gostaria muito de falar contigo. Podemos conversar um minutinho?`;
 
             renderTimeline(neg);
@@ -1167,7 +1191,7 @@
             neg.propRenegociarFuturo = document.getElementById('propRenegociarFuturo').value;
 
             let summaryDetails = [];
-            
+
             if (newStatus === "Acordo Aceito / Concluído") {
                  summaryDetails.push(`✅ Acordo Fechado e Aceito pelo Cliente: ${tipoAcordo} - ${neg.propNovoQtd}x de R$ ${neg.propNovoValor}`);
             } else if (newStatus === "Cobrança Recorrente") {
@@ -1196,7 +1220,7 @@
 
             saveData();
             showCustomAlert("Sucesso", "Alterações salvas com sucesso!");
-            
+
             document.getElementById('detailStatusBadge').innerText = neg.status;
             document.getElementById('detailFailedAttempts').innerText = neg.failedAttempts || 0;
             document.getElementById('actionObservation').value = '';
@@ -1208,8 +1232,7 @@
             isModalOpen = false; 
             currentNegotiationId = null;
             closeModal('detailsModal');
-            
-            // Força a atualização dos painéis para limpar a busca global se o usuário não apagou o texto antes de abrir a ficha
+
             document.getElementById('searchInput').value = ""; 
             renderPanels();
         }
@@ -1232,7 +1255,7 @@
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        
+
         function closeModal(id) { 
             document.getElementById(id).style.display = 'none'; 
             if(id === 'importModal' || id === 'newNegotiationModal') isModalOpen = false;
